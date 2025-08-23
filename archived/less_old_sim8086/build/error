@@ -1,0 +1,2 @@
+/home/aluc/zot/computerenhance/sim8086/listings/listing_0042_completionist_decode.asm:395: warning: superfluous LOCK prefix on XCHG instruction [-w+prefix-lock-xchg]
+Segmentation fault (core dumped)
