@@ -7,6 +7,7 @@ Compiler="clang"
 
 CompilerFlags="
 -g
+-fdiagnostics-absolute-paths
 -nostdinc++
 -DSIM86_INTERNAL
 "
