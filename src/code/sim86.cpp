@@ -75,7 +75,19 @@ Run8086(psize DisassemblySize, u8 *Disassembly)
                     Assert(0);
                 }
                 
-                *Destination = *Source;
+                if(Decoded.Flags & Inst_Wide)
+                {
+                    s32 Old = *Destination;
+                    *Destination = *Source;
+                    
+                    printf("%4x->%4x\n", Old, *Destination);
+                    
+                }
+                else
+                {
+                    Assert(0);
+                }
+                
             }
             else
             {
