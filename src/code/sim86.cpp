@@ -31,7 +31,7 @@ Run8086(psize DisassemblySize, u8 *Disassembly)
             Offset += Decoded.Size;
             
 #if SIM86_INTERNAL           
-            printf("Size:%u Op:%s Flags:0x%x\n", Decoded.Size, Sim86_MnemonicFromOperationType(Decoded.Op), Decoded.Flags);
+            printf("Size:%u Op:%s Flags:0x%x", Decoded.Size, Sim86_MnemonicFromOperationType(Decoded.Op), Decoded.Flags);
 #endif
             if(0) {}
             else if(Decoded.Op == Op_mov)
@@ -75,18 +75,27 @@ Run8086(psize DisassemblySize, u8 *Disassembly)
                     Assert(0);
                 }
                 
+                s32 Old = *Destination;
                 if(Decoded.Flags & Inst_Wide)
                 {
-                    s32 Old = *Destination;
                     *Destination = *Source;
-                    
-                    printf("%4x->%4x\n", Old, *Destination);
-                    
                 }
                 else
                 {
-                    Assert(0);
+                    // NOTE(luca): We assume that an immediate will have an Offset of 0.
+                    u32 DestOffset = Decoded.Operands[0].Register.Offset;
+                    u32 SourceOffset = Decoded.Operands[1].Register.Offset;
+                    
+                    u8 *SourceByte = (u8 *)Source + SourceOffset;
+                    u8 *DestByte = (u8 *)Destination + DestOffset;
+                    
+                    *DestByte = *SourceByte;
                 }
+                
+#if SIM86_INTERNAL                    
+                printf(" ; %s:0x%x->0x%x", Sim86_RegisterNameFromOperand(&Decoded.Operands[0].Register),
+                       Old, *Destination);
+#endif
                 
             }
             else
@@ -100,21 +109,30 @@ Run8086(psize DisassemblySize, u8 *Disassembly)
             printf("Unrecognized instruction\n");
             break;
         }
+        
+#if SIM86_INTERNAL
+        printf("\n");
+#endif
+        
     }
     
     printf("Final registers:\n");
     for(u32 RegisterIndex = Register_a;
-        RegisterIndex < Register_di + 1;
+        RegisterIndex < Register_ds + 1;
         RegisterIndex++)
     {
         register_access Register = {};
         Register.Index = RegisterIndex;
         Register.Offset = 0;
         Register.Count = 2;
-        printf("     %s: 0x%04x (%d)\n", 
-               Sim86_RegisterNameFromOperand(&Register),
-               Registers[RegisterIndex],
-               Registers[RegisterIndex]);
+        
+        u32 Value = Registers[RegisterIndex];
+        if(Value > 0)
+        {
+            printf("     %s: 0x%04x (%d)\n", 
+                   Sim86_RegisterNameFromOperand(&Register),
+                   Value, Value);
+        }
     }
 }
 
