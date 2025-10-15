@@ -20,6 +20,7 @@ internal void
 Run8086(psize DisassemblySize, u8 *Disassembly)
 {
     s32 Registers[Register_count] = {}; 
+    u32 Flags = 0;
     
     u32 Offset = 0;
     while(Offset < DisassemblySize)
@@ -96,7 +97,61 @@ Run8086(psize DisassemblySize, u8 *Disassembly)
                 printf(" ; %s:0x%x->0x%x", Sim86_RegisterNameFromOperand(&Decoded.Operands[0].Register),
                        Old, *Destination);
 #endif
+            }
+            else if(Decoded.Op == Op_cmp)
+            {
+                Assert(0 && "cmp has not been implemented yet");
+            }
+            else if(Decoded.Op == Op_sub)
+            {
+                s32 *Destination = 0;
+                s32 *Source = 0;
                 
+                if(0) {}
+                else if(Decoded.Operands[0].Type == Operand_Register)
+                {
+                    Destination = Registers + Decoded.Operands[0].Register.Index;
+                }
+                else
+                {
+                    Assert(0 && "Destination must be a register");
+                }
+                
+                if(0) {}
+                else if(Decoded.Operands[1].Type == Operand_Register)
+                {
+                    Source = Registers + Decoded.Operands[1].Register.Index;
+                }
+                else if(Decoded.Operands[1].Type == Operand_Immediate)
+                {
+                    Source = &Decoded.Operands[1].Immediate.Value;
+                }
+                else
+                {
+                    Assert(1 && "Substraction from memory address is not implemented yet.");
+                }
+                
+                Assert(0 && "sub has not been implemented yet");
+                *Destination = (u16)((u16)(*Destination) - ((u16)(*Source)));
+                
+                if(*Destination & (1 << 15))
+                {
+                    Flags |= Flag_Sign;
+                }
+                
+                if(*Destination == 0)
+                {
+                    Flags |= Flag_Zero;
+                }
+                else
+                {
+                    Flags &= (~Flag_Zero);
+                }
+                
+            }
+            else if(Decoded.Op == Op_add)
+            {
+                Assert(0 && "add has not been implemented yet");
             }
             else
             {

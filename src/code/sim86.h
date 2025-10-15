@@ -35,5 +35,11 @@ enum register_mapping_8086
     Register_count,
 };
 
+enum flags_8086
+{
+    Flag_Zero = 0x1,
+    Flag_Sign = 0x2,
+};
+
 
 #endif //SIM86_H
