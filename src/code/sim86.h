@@ -37,8 +37,16 @@ enum register_mapping_8086
 
 enum flags_8086
 {
-    Flag_Zero = 0x1,
-    Flag_Sign = 0x2,
+    Flag_Carry,
+    Flag_Parity,
+    Flag_AuxiliaryCarry,
+    Flag_Zero,
+    Flag_Sign,
+    Flag_Overflow,
+    Flag_Interrupt,
+    Flag_Direction,
+    Flag_Trap,
+    Flag_Count
 };
 
 
