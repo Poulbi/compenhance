@@ -37,17 +37,17 @@ enum register_mapping_8086
 
 enum flags_8086
 {
-    Flag_Carry,
-    Flag_Parity,
-    Flag_AuxiliaryCarry,
-    Flag_Zero,
-    Flag_Sign,
-    Flag_Overflow,
-    Flag_Interrupt,
-    Flag_Direction,
-    Flag_Trap,
-    Flag_Count
+    Flag_None           = 0,
+    Flag_Carry          =(1 << 0),
+    Flag_Parity         =(1 << 1),
+    Flag_AuxiliaryCarry =(1 << 2),
+    Flag_Zero           =(1 << 3),
+    Flag_Sign           =(1 << 4),
+    Flag_Overflow       =(1 << 5),
+    Flag_Interrupt      =(1 << 6),
+    Flag_Direction      =(1 << 7),
+    Flag_Trap           =(1 << 8),
+    Flag_Count          = 11,
 };
-
 
 #endif //SIM86_H
