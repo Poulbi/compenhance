@@ -669,6 +669,9 @@ CPU only understand memory in register and simple operations on these bytes.1
 # 25. [New Schedule Experiment](https://www.computerenhance.com/p/new-schedule-experiment)
 # 26. [Simulating ADD, SUB, and CMP](https://www.computerenhance.com/p/simulating-add-jmp-and-cmp)
 Signed flag is set when the highest bit (sign bit) is set.
+`cmp` instructions are ways to turn arithmetic instructions in comparison.
+Arithmetics setting the flags is so that you could save on cmp instructions.
+
 
 # 27. [Simulating Conditional Jumps](https://www.computerenhance.com/p/simulating-conditional-jumps)
 # 28. [Response to a Reporter Regarding "Clean Code, Horrible Performance"](https://www.computerenhance.com/p/response-to-a-reporter-regarding)

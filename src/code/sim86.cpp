@@ -1,26 +1,140 @@
-/* ========================================================================
-
-   (C) Copyright 2023 by Molly Rocket, Inc., All Rights Reserved.
-   
-   This software is provided 'as-is', without any express or implied
-   warranty. In no event will the authors be held liable for any damages
-   arising from the use of this software.
-   
-   Please see https://computerenhance.com for more information
-   
-   ======================================================================== */
-
 #include <stdio.h>
 #include <string.h>
 
 #include "sim86.h"
 #include "sim86_shared.h"
 
+global_variable u8 FlagToCharMapping[] = "CPAZSOIDT";
+
+internal void
+SetOrUnsetFlag(u32 *FlagsRegister, b32 Condition, flags_8086 Flag)
+{
+    if(Condition)
+    {
+        *FlagsRegister |= Flag;
+    }
+    else
+    {
+        *FlagsRegister &= (~Flag);
+    }
+}
+
+internal u32
+FlagsToString(char *Buffer, u32 Flags)
+{
+    u32 Length = 0;
+    
+    for(u32 MappingIndex = 0;
+        MappingIndex < ArrayCount(FlagToCharMapping);
+        MappingIndex++)
+    {
+        u8 Char = FlagToCharMapping[MappingIndex];
+        b32 IsBitSet = (Flags & 1);
+        Flags >>= 1;
+        if(IsBitSet)
+        {
+            Buffer[Length++] = Char;
+        }
+    }
+    
+    return Length;
+}
+
+internal void
+FlagsFromValue(u32 *FlagsRegister, u32 InstructionFlags, s32 Value)
+{
+    u32 OldFlagsRegister = *FlagsRegister;
+    
+    u32 SignMask = (1 << ((InstructionFlags & Inst_Wide) ? 15 : 7));
+    SetOrUnsetFlag(FlagsRegister, (Value & SignMask), Flag_Sign);
+    SetOrUnsetFlag(FlagsRegister, (Value == 0),       Flag_Zero);
+    
+    // NOTE(luca): Parity flag is set when in the lower 8 bits the number of set bits is even.
+    u32 OneBitsCount = 0;
+    for(u32 BitsIndex = 0;
+        BitsIndex < 8;
+        BitsIndex++)
+    {
+        OneBitsCount += (Value & 1);
+        Value >>= 1;
+    }
+    SetOrUnsetFlag(FlagsRegister, (!(OneBitsCount & 1)), Flag_Parity);
+    
+    // TODO(luca): Overflow flag
+    // Were we adding positive numbers but produced a negative number?
+    
+    // TODO(luca): Carry flag 
+    // When twot numbers are added and the 17th bit would be set?
+    
+    // TODO(luca): Auxiliary carry flag
+    // Carry for bottom 8 bits
+    if(*FlagsRegister != OldFlagsRegister)
+    {
+        char OldFlagsString[ArrayCount(FlagToCharMapping)] = {};
+        char FlagsString[ArrayCount(FlagToCharMapping)] = {};
+        FlagsToString(OldFlagsString, OldFlagsRegister);
+        FlagsToString(FlagsString, *FlagsRegister);
+        
+        printf(" flags:%s->%s", OldFlagsString, FlagsString);
+    }
+}
+
+struct operands_to_values_result
+{
+    s32 *Destination;
+    s32 *Source;
+};
+internal operands_to_values_result
+OperandsToValues(s32 *Registers,
+                 instruction_operand *DestinationOperand, instruction_operand *SourceOperand)
+{
+    operands_to_values_result Result = {};
+    
+    if(0) {}
+    else if(DestinationOperand->Type == Operand_Register)
+    {
+        Result.Destination = Registers + DestinationOperand->Register.Index;
+    }
+    else if(DestinationOperand->Type == Operand_Memory)
+    {
+        Assert(0 && "not implemented yet.");
+    }
+    else if(DestinationOperand->Type == Operand_Immediate)
+    {
+        Assert(0 && "not implemented yet.");
+    }
+    else
+    {
+        Assert(0);
+    }
+    
+    if(0) {}
+    else if(SourceOperand->Type == Operand_Register)
+    {
+        Result.Source = Registers + SourceOperand->Register.Index;
+    }
+    else if(SourceOperand->Type == Operand_Immediate)
+    {
+        Result.Source = &SourceOperand->Immediate.Value;
+    }
+    else if(SourceOperand->Type == Operand_Memory)
+    {
+        Assert(0 && "not implemented yet.");
+    }
+    else
+    {
+        Assert(0);
+    }
+    
+    return Result;
+}
+
+
 internal void
 Run8086(psize DisassemblySize, u8 *Disassembly)
 {
     s32 Registers[Register_count] = {}; 
-    u32 Flags = 0;
+    u32 FlagsRegister = 0;
     
     u32 Offset = 0;
     while(Offset < DisassemblySize)
@@ -32,49 +146,20 @@ Run8086(psize DisassemblySize, u8 *Disassembly)
             Offset += Decoded.Size;
             
 #if SIM86_INTERNAL           
-            printf("Size:%u Op:%s Flags:0x%x", Decoded.Size, Sim86_MnemonicFromOperationType(Decoded.Op), Decoded.Flags);
+            printf("Size:%u Op:%s Flags:0x%x ;", Decoded.Size, Sim86_MnemonicFromOperationType(Decoded.Op), Decoded.Flags);
 #endif
+            
+            instruction_operand *DestinationOperand = Decoded.Operands;
+            instruction_operand *SourceOperand = Decoded.Operands + 1;
+            operands_to_values_result OperandsValues = OperandsToValues(Registers, DestinationOperand, SourceOperand);
+            s32 *Destination = OperandsValues.Destination;
+            s32 *Source = OperandsValues.Source;
+            
             if(0) {}
             else if(Decoded.Op == Op_mov)
             {
-                s32 *Destination = 0;
-                s32 *Source = 0;
-                
-                if(0) {}
-                else if(Decoded.Operands[0].Type == Operand_Register)
-                {
-                    Destination = &Registers[Decoded.Operands[0].Register.Index];
-                }
-                else if(Decoded.Operands[0].Type == Operand_Memory)
-                {
-                    Assert(0 && "mov to memory not implemented yet.");
-                }
-                else if(Decoded.Operands[0].Type == Operand_Immediate)
-                {
-                    Assert(0 && "Cannot move to immediate value.");
-                }
-                else
-                {
-                    Assert(0);
-                }
-                
-                if(0) {}
-                else if(Decoded.Operands[1].Type == Operand_Register)
-                {
-                    Source = &Registers[Decoded.Operands[1].Register.Index];
-                }
-                else if(Decoded.Operands[1].Type == Operand_Immediate)
-                {
-                    Source = &Decoded.Operands[1].Immediate.Value;
-                }
-                else if(Decoded.Operands[1].Type == Operand_Memory)
-                {
-                    Assert(0 && "mov from memory not implemented yet.");
-                }
-                else
-                {
-                    Assert(0);
-                }
+                Assert(DestinationOperand->Type == Operand_Register);
+                Assert(SourceOperand->Type == Operand_Register || SourceOperand->Type == Operand_Immediate);
                 
                 s32 Old = *Destination;
                 if(Decoded.Flags & Inst_Wide)
@@ -84,8 +169,8 @@ Run8086(psize DisassemblySize, u8 *Disassembly)
                 else
                 {
                     // NOTE(luca): We assume that an immediate will have an Offset of 0.
-                    u32 DestOffset = Decoded.Operands[0].Register.Offset;
-                    u32 SourceOffset = Decoded.Operands[1].Register.Offset;
+                    u32 DestOffset = DestinationOperand->Register.Offset;
+                    u32 SourceOffset = SourceOperand->Register.Offset;
                     
                     u8 *SourceByte = (u8 *)Source + SourceOffset;
                     u8 *DestByte = (u8 *)Destination + DestOffset;
@@ -94,64 +179,46 @@ Run8086(psize DisassemblySize, u8 *Disassembly)
                 }
                 
 #if SIM86_INTERNAL                    
-                printf(" ; %s:0x%x->0x%x", Sim86_RegisterNameFromOperand(&Decoded.Operands[0].Register),
+                printf(" %s:0x%x->0x%x", Sim86_RegisterNameFromOperand(&DestinationOperand->Register),
                        Old, *Destination);
 #endif
             }
             else if(Decoded.Op == Op_cmp)
             {
-                Assert(0 && "cmp has not been implemented yet");
+                Assert(DestinationOperand->Type == Operand_Register);
+                Assert(SourceOperand->Type == Operand_Register || SourceOperand->Type == Operand_Immediate);
+                
+                s32 Value = (u16)((u16)(*Destination) - ((u16)(*Source)));
+                
+                FlagsFromValue(&FlagsRegister, Decoded.Flags, Value);
             }
             else if(Decoded.Op == Op_sub)
             {
-                s32 *Destination = 0;
-                s32 *Source = 0;
+                Assert(DestinationOperand->Type == Operand_Register);
+                Assert(SourceOperand->Type == Operand_Register || SourceOperand->Type == Operand_Immediate);
                 
-                if(0) {}
-                else if(Decoded.Operands[0].Type == Operand_Register)
-                {
-                    Destination = Registers + Decoded.Operands[0].Register.Index;
-                }
-                else
-                {
-                    Assert(0 && "Destination must be a register");
-                }
-                
-                if(0) {}
-                else if(Decoded.Operands[1].Type == Operand_Register)
-                {
-                    Source = Registers + Decoded.Operands[1].Register.Index;
-                }
-                else if(Decoded.Operands[1].Type == Operand_Immediate)
-                {
-                    Source = &Decoded.Operands[1].Immediate.Value;
-                }
-                else
-                {
-                    Assert(1 && "Substraction from memory address is not implemented yet.");
-                }
-                
-                Assert(0 && "sub has not been implemented yet");
+                s32 Old = *Destination;
+                u32 OldFlags = FlagsRegister;
                 *Destination = (u16)((u16)(*Destination) - ((u16)(*Source)));
+                printf(" %s:0x%x->0x%x", 
+                       Sim86_RegisterNameFromOperand(&DestinationOperand->Register),
+                       Old, *Destination);
                 
-                if(*Destination & (1 << 15))
-                {
-                    Flags |= Flag_Sign;
-                }
-                
-                if(*Destination == 0)
-                {
-                    Flags |= Flag_Zero;
-                }
-                else
-                {
-                    Flags &= (~Flag_Zero);
-                }
+                FlagsFromValue(&FlagsRegister, Decoded.Flags, *Destination);
                 
             }
             else if(Decoded.Op == Op_add)
             {
-                Assert(0 && "add has not been implemented yet");
+                Assert(DestinationOperand->Type == Operand_Register);
+                Assert(SourceOperand->Type == Operand_Register || SourceOperand->Type == Operand_Immediate);
+                
+                s32 Old = *Destination;
+                *Destination = (u16)((u16)(*Destination) + ((u16)(*Source)));
+                printf(" %s:0x%x->0x%x", 
+                       Sim86_RegisterNameFromOperand(&DestinationOperand->Register),
+                       Old, *Destination);
+                
+                FlagsFromValue(&FlagsRegister, Decoded.Flags, *Destination);
             }
             else
             {
@@ -184,11 +251,14 @@ Run8086(psize DisassemblySize, u8 *Disassembly)
         u32 Value = Registers[RegisterIndex];
         if(Value > 0)
         {
-            printf("     %s: 0x%04x (%d)\n", 
+            printf("     %s: 0x%0x (%d)\n", 
                    Sim86_RegisterNameFromOperand(&Register),
                    Value, Value);
         }
     }
+    char FlagsString[ArrayCount(FlagToCharMapping)] = {};
+    FlagsToString(FlagsString, FlagsRegister);
+    printf("  flags: %s", FlagsString);
 }
 
 void PrintUsage(char *ExePath)
