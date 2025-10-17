@@ -101,9 +101,9 @@ OperandsToValues(s32 *Registers,
     }
     else if(DestinationOperand->Type == Operand_Immediate)
     {
-        Assert(0 && "not implemented yet.");
+        Result.Destination = &DestinationOperand->Immediate.Value;
     }
-    else
+    else if(SourceOperand->Type != Operand_None)
     {
         Assert(0);
     }
@@ -121,7 +121,7 @@ OperandsToValues(s32 *Registers,
     {
         Assert(0 && "not implemented yet.");
     }
-    else
+    else if(SourceOperand->Type != Operand_None)
     {
         Assert(0);
     }
@@ -135,15 +135,16 @@ Run8086(psize DisassemblySize, u8 *Disassembly)
 {
     s32 Registers[Register_count] = {}; 
     u32 FlagsRegister = 0;
+    u32 IPRegister = 0;
     
-    u32 Offset = 0;
-    while(Offset < DisassemblySize)
+    while(IPRegister < DisassemblySize)
     {
         instruction Decoded;
-        Sim86_Decode8086Instruction(DisassemblySize - Offset, Disassembly + Offset, &Decoded);
+        Sim86_Decode8086Instruction(DisassemblySize - IPRegister, Disassembly + IPRegister, &Decoded);
         if(Decoded.Op)
         {
-            Offset += Decoded.Size;
+            u32 OldIPRegister = IPRegister;
+            IPRegister += Decoded.Size;
             
 #if SIM86_INTERNAL           
             printf("Size:%u Op:%s Flags:0x%x ;", Decoded.Size, Sim86_MnemonicFromOperationType(Decoded.Op), Decoded.Flags);
@@ -198,7 +199,6 @@ Run8086(psize DisassemblySize, u8 *Disassembly)
                 Assert(SourceOperand->Type == Operand_Register || SourceOperand->Type == Operand_Immediate);
                 
                 s32 Old = *Destination;
-                u32 OldFlags = FlagsRegister;
                 *Destination = (u16)((u16)(*Destination) - ((u16)(*Source)));
                 printf(" %s:0x%x->0x%x", 
                        Sim86_RegisterNameFromOperand(&DestinationOperand->Register),
@@ -220,10 +220,28 @@ Run8086(psize DisassemblySize, u8 *Disassembly)
                 
                 FlagsFromValue(&FlagsRegister, Decoded.Flags, *Destination);
             }
+            else if(Decoded.Op == Op_jne)
+            {
+                if(!(FlagsRegister & Flag_Zero))
+                {
+                    IPRegister += *Destination;
+                }
+            }
+            else if(Decoded.Op == Op_je)
+            {
+                if((FlagsRegister & Flag_Zero))
+                {
+                    IPRegister += *Destination;
+                }
+            }
             else
             {
                 Assert(0 && "Op not implemented yet.");
             }
+            
+#if SIM86_INTERNAL
+            printf(" ip:0x%x->0x%x", OldIPRegister, IPRegister);
+#endif
             
         }
         else
@@ -256,9 +274,11 @@ Run8086(psize DisassemblySize, u8 *Disassembly)
                    Value, Value);
         }
     }
+    printf("     ip: 0x%04x (%d)\n", IPRegister, IPRegister);
+    
     char FlagsString[ArrayCount(FlagToCharMapping)] = {};
     FlagsToString(FlagsString, FlagsRegister);
-    printf("  flags: %s", FlagsString);
+    printf("  flags: %s\n", FlagsString);
 }
 
 void PrintUsage(char *ExePath)

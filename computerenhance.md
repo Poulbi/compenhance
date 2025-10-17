@@ -31,7 +31,6 @@ Only learning about how performance works is enough.
 # 4. [Waste](https://www.computerenhance.com/p/waste)
 Instructions that do not need to be there.
 - Often the biggest multiplier
-
 ```asm
 LEA C, [A+B]
 ```
@@ -674,9 +673,16 @@ Arithmetics setting the flags is so that you could save on cmp instructions.
 
 
 # 27. [Simulating Conditional Jumps](https://www.computerenhance.com/p/simulating-conditional-jumps)
+IP register holds where the next instruction is before it gets executed.
 # 28. [Response to a Reporter Regarding "Clean Code, Horrible Performance"](https://www.computerenhance.com/p/response-to-a-reporter-regarding)
 # 29. [Monday Q&A #7 (2023-04-10)](https://www.computerenhance.com/p/monday-q-and-a-7-2023-04-10)
 # 30. [Simulating Memory](https://www.computerenhance.com/p/simulating-memory)
+Segment registers are used to access megabytes of memory.
+```asm
+mov xx, ds.[bp]
+```
+They specify which 64k(2^16) segment you want to address.  The can overlap.  Offsets stay at 16 bits.
+Since they are shifted, you create 4bits boundaries.
 # 31. [Simulating Real Programs](https://www.computerenhance.com/p/simulating-real-programs)
 # 32. [Monday Q&A #8 (2023-04-17)](https://www.computerenhance.com/p/monday-q-and-a-8-2023-04-17)
 # 33. [Other Common Instructions](https://www.computerenhance.com/p/other-common-instructions)
