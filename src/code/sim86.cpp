@@ -85,7 +85,7 @@ struct operands_to_values_result
     s32 *Source;
 };
 internal operands_to_values_result
-OperandsToValues(s32 *Registers,
+OperandsToValues(s32 *Registers, u8 *Memory,
                  instruction_operand *DestinationOperand, instruction_operand *SourceOperand)
 {
     operands_to_values_result Result = {};
@@ -97,7 +97,19 @@ OperandsToValues(s32 *Registers,
     }
     else if(DestinationOperand->Type == Operand_Memory)
     {
-        Assert(0 && "not implemented yet.");
+        Result.Destination = (s32 *)(Memory + DestinationOperand->Address.Displacement);
+        
+        s32 CompleteDisplacement = DestinationOperand->Address.Displacement;
+        Assert(DestinationOperand->Address.Terms[0].Register.Count == DestinationOperand->Address.Terms[1].Register.Count);
+        
+        u32 Count = DestinationOperand->Address.Terms[0].Register.Index;
+        u32 Mask = ((u32)((-1)) >> (16 + (16 - Count*8)));
+        
+        CompleteDisplacement += (Registers[DestinationOperand->Address.Terms[0].Register.Index] & Mask) +
+        (Registers[DestinationOperand->Address.Terms[1].Register.Index] & Mask);
+        
+        Result.Destination = (s32 *)(Memory + CompleteDisplacement);
+        Assert(0);
     }
     else if(DestinationOperand->Type == Operand_Immediate)
     {
@@ -137,6 +149,8 @@ Run8086(psize DisassemblySize, u8 *Disassembly)
     u32 FlagsRegister = 0;
     u32 IPRegister = 0;
     
+    local_persist u8 Memory[1*1024*1024*1024] = {};
+    
     while(IPRegister < DisassemblySize)
     {
         instruction Decoded;
@@ -152,14 +166,13 @@ Run8086(psize DisassemblySize, u8 *Disassembly)
             
             instruction_operand *DestinationOperand = Decoded.Operands;
             instruction_operand *SourceOperand = Decoded.Operands + 1;
-            operands_to_values_result OperandsValues = OperandsToValues(Registers, DestinationOperand, SourceOperand);
+            operands_to_values_result OperandsValues = OperandsToValues(Registers, Memory, DestinationOperand, SourceOperand);
             s32 *Destination = OperandsValues.Destination;
             s32 *Source = OperandsValues.Source;
             
             if(0) {}
             else if(Decoded.Op == Op_mov)
             {
-                Assert(DestinationOperand->Type == Operand_Register);
                 Assert(SourceOperand->Type == Operand_Register || SourceOperand->Type == Operand_Immediate);
                 
                 s32 Old = *Destination;
@@ -180,8 +193,11 @@ Run8086(psize DisassemblySize, u8 *Disassembly)
                 }
                 
 #if SIM86_INTERNAL                    
-                printf(" %s:0x%x->0x%x", Sim86_RegisterNameFromOperand(&DestinationOperand->Register),
-                       Old, *Destination);
+                if(DestinationOperand->Type == Operand_Register)
+                {
+                    printf(" %s:0x%x->0x%x", Sim86_RegisterNameFromOperand(&DestinationOperand->Register),
+                           Old, *Destination);
+                }
 #endif
             }
             else if(Decoded.Op == Op_cmp)
