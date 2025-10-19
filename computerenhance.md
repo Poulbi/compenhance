@@ -1,4 +1,5 @@
 # 1. [Table of Contents](https://www.computerenhance.com/p/table-of-contents)
+
 # 2. [Performance-Aware Programming Series Begins February 1st](https://www.computerenhance.com/p/performance-aware-programming-series)
 # 3. [Welcome to the Performance-Aware Programming Series!](https://www.computerenhance.com/p/welcome-to-the-performance-aware)
 # Optimization
@@ -28,6 +29,7 @@ Only learning about how performance works is enough.
 # Solution
 - Keep result of instructions in mind, not code
 - Learn what the maximum speed of something should be```
+
 # 4. [Waste](https://www.computerenhance.com/p/waste)
 Instructions that do not need to be there.
 - Often the biggest multiplier
@@ -52,6 +54,7 @@ Key points:
   - more instructions != more time
 
 Python had 180x instructions and was 130x slower.```
+
 # 5. [Instructions Per Clock](https://www.computerenhance.com/p/instructions-per-clock)
 *speed of instructions*
 
@@ -96,6 +99,7 @@ Multiple chains can help break through limits.
 
 CPUs are designed for more computation so boosting IPL in a loop that
 does not do a lot of computation will bring less benefits.```
+
 # 6. [Monday Q&A (2023-02-05)](https://www.computerenhance.com/p/monday-q-and-a-2023-02-05)
 # JIT
 - compile code "upfront"
@@ -165,6 +169,7 @@ input += 4
 ```
 # Three-based addition:
 - common technique to work out a dependency chain```
+
 # 7. [Single Instruction, Multiple Data](https://www.computerenhance.com/p/single-instruction-multiple-data)
 *Amount of instructions*
 
@@ -198,6 +203,7 @@ input += 4
 # Difficulty
 - SIMD does not care about how data is organized
 - easy with adds```
+
 # 8. [Caching](https://www.computerenhance.com/p/caching)
 *speed of instructions*
 
@@ -453,6 +459,7 @@ Because there are many dependencies on loads it is very important.
 - inclusive cache ::
   - L1 and L2 are filled with the data
 - per chip
+
 # 10. [Multithreading](https://www.computerenhance.com/p/multithreading)
 *Increasing speed of instructions*
 
@@ -473,6 +480,7 @@ Because there are many dependencies on loads it is very important.
 - bandwith does not increase a lot when using main memory
   - depending on the chip
 - L3 cache and main memory are shared (not big speed ups)```
+
 # 11. [Python Revisited](https://www.computerenhance.com/p/python-revisited)
 Assembly is what determines the speed.
 
@@ -543,13 +551,16 @@ Assembly is what determines the speed.
 
 # How to get memory bandwidth
 - https://github.com/cmuratori/blandwidth```
+
 # 13. [The Haversine Distance Problem](https://www.computerenhance.com/p/the-haversine-distance-problem)
 - Computing arc length between two coordinates.
 - You want to do the math first.
     - CPU is made for it
 - Second is the *Input*
 - Reading the data can take a long time.```
+
 # 14. ["Clean" Code, Horrible Performance](https://www.computerenhance.com/p/clean-code-horrible-performance)
+
 # 15. [Instruction Decoding on the 8086](https://www.computerenhance.com/p/instruction-decoding-on-the-8086)
 The 8086 instruction set architecture is easier.
 - Better for understanding concepts.
@@ -597,6 +608,7 @@ Exercise:
 - *assemble the listings
 - load 2 bytes and disassemble that instruction
   - outputs the instructions
+
 # 16. [Decoding Multiple Instructions and Suffixes](https://www.computerenhance.com/p/decoding-multiple-instructions-and)
 1st byte tells if there's a second, 2nd if there's a 3rd, ...
 -> makes decoding dependent process, A cost on the CPU
@@ -642,8 +654,11 @@ When reassembling signed/unsigned information will be lost.
 - different instruction for accumulator
   - to save a byte
 # 17. [Monday Q&A #4 (2023-03-06)](https://www.computerenhance.com/p/monday-q-and-a-4-2023-03-06)
+
 # 18. [Opcode Patterns in 8086 Arithmetic](https://www.computerenhance.com/p/opcode-patterns-in-8086-arithmetic)
+
 # 19. [Monday Q&A #5 (2023-03-13)](https://www.computerenhance.com/p/monday-q-and-a-5-2023-03-13)
+
 # 20. [8086 Decoder Code Review](https://www.computerenhance.com/p/8086-decoder-code-review)
 Enum + bits size, eg. (Byte_Lit, 6)
 Using a segmented access so access to memory can be controlled.
@@ -676,6 +691,14 @@ Arithmetics setting the flags is so that you could save on cmp instructions.
 IP register holds where the next instruction is before it gets executed.
 # 28. [Response to a Reporter Regarding "Clean Code, Horrible Performance"](https://www.computerenhance.com/p/response-to-a-reporter-regarding)
 # 29. [Monday Q&A #7 (2023-04-10)](https://www.computerenhance.com/p/monday-q-and-a-7-2023-04-10)
+Hacker's delight's `popcnt` can easily find the parity.
+There are instructions that push and pop the flags register.
+Registers don't have garbage value they can even have input values from the OS (like adresses you need).
+AF is often used for math on ASCII or BCD, symbols represented as binary.
+Order of bits in a register is not how they are stored physically.
+
+Sign extension is creating a 16bit value by replicating the high bit in the high bit.
+
 # 30. [Simulating Memory](https://www.computerenhance.com/p/simulating-memory)
 Segment registers are used to access megabytes of memory.
 ```asm
@@ -683,11 +706,34 @@ mov xx, ds.[bp]
 ```
 They specify which 64k(2^16) segment you want to address.  The can overlap.  Offsets stay at 16 bits.
 Since they are shifted, you create 4bits boundaries.
+
 # 31. [Simulating Real Programs](https://www.computerenhance.com/p/simulating-real-programs)
+
 # 32. [Monday Q&A #8 (2023-04-17)](https://www.computerenhance.com/p/monday-q-and-a-8-2023-04-17)
+Overwriting insrtuctions is harder on x64 because of the agressive caching.
+The Frontend gathers instructions and the Backend executes them.
+Intel chips are made for backwards compatibility in software making old software faster.  You cannot explicitly manage it, except on specific architectures (eg. ps3 cell processor).  There are special instructions which affect the cache.
+If your code relies on a byte location in a register it can be affected by endianness.
+You can have a magic number in your file format to detect endianness.
+Little Endian is the default nowadays.
+A turing machine is a way to prove that you can do all computations you need.  Useful for not leaving algorithmic "gaps".
+Not knowing the memory layout introduces a lot of complexity.  Because there are less moving parts.
+
 # 33. [Other Common Instructions](https://www.computerenhance.com/p/other-common-instructions)
+There are arithmetic variants of instructions preserving the signed bit.
+Variations on arithmetic ops without writing back the result.
+Some ops are compacted instructions.
+
 # 34. [The Stack](https://www.computerenhance.com/p/the-stack)
+The `call` instruction affects the IP register and puts it on the stack.
+Calling conventions and ABIs are rules so code can operate with other code when it's ambiguous (eg. function parameters).
+
 # 35. [Monday Q&A #9 (2023-04-24)](https://www.computerenhance.com/p/monday-q-and-a-9-2023-04-24)
+You can spot memory access by brackets '[]'.
+Either a load/store or LEA  or prefetch.  LEA does a load with a temp registers.
+You can use the stack as regular memory by saving `sp` (stack pointer) to a register and offsetting from it.
+A stack frame is a context view of a "call".
+
 # 36. [Performance Excuses Debunked](https://www.computerenhance.com/p/performance-excuses-debunked)
 # 37. [Estimating Cycles](https://www.computerenhance.com/p/estimating-cycles)
 # 38. [Monday Q&A #10 (2023-05-08)](https://www.computerenhance.com/p/monday-q-and-a-10-2023-05-08)

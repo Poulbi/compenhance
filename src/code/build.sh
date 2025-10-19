@@ -10,6 +10,7 @@ CompilerFlags="
 -fdiagnostics-absolute-paths
 -nostdinc++
 -DSIM86_INTERNAL
+-fsanitize=undefined
 "
 
 WarningFlags="

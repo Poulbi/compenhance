@@ -5,6 +5,7 @@
 #include "sim86_shared.h"
 
 global_variable u8 FlagToCharMapping[] = "CPAZSOIDT";
+global_variable u8 GlobalMemory[1*1024*1024] = {};
 
 internal void
 SetOrUnsetFlag(u32 *FlagsRegister, b32 Condition, flags_8086 Flag)
@@ -49,7 +50,7 @@ FlagsFromValue(u32 *FlagsRegister, u32 InstructionFlags, s32 Value)
     SetOrUnsetFlag(FlagsRegister, (Value & SignMask), Flag_Sign);
     SetOrUnsetFlag(FlagsRegister, (Value == 0),       Flag_Zero);
     
-    // NOTE(luca): Parity flag is set when in the lower 8 bits the number of set bits is even.
+    // NOTE(luca): Parity flag is set when in lower 8 bits have an even number of set bits.
     u32 OneBitsCount = 0;
     for(u32 BitsIndex = 0;
         BitsIndex < 8;
@@ -79,61 +80,35 @@ FlagsFromValue(u32 *FlagsRegister, u32 InstructionFlags, s32 Value)
     }
 }
 
-struct operands_to_values_result
+internal s32 *
+OperandToValue(s32 *Registers, u8 *Memory, instruction_operand *Operand)
 {
-    s32 *Destination;
-    s32 *Source;
-};
-internal operands_to_values_result
-OperandsToValues(s32 *Registers, u8 *Memory,
-                 instruction_operand *DestinationOperand, instruction_operand *SourceOperand)
-{
-    operands_to_values_result Result = {};
+    s32 *Result = 0;
     
     if(0) {}
-    else if(DestinationOperand->Type == Operand_Register)
+    else if(Operand->Type == Operand_Register)
     {
-        Result.Destination = Registers + DestinationOperand->Register.Index;
+        Result = Registers + Operand->Register.Index;
     }
-    else if(DestinationOperand->Type == Operand_Memory)
+    else if(Operand->Type == Operand_Memory)
     {
-        Result.Destination = (s32 *)(Memory + DestinationOperand->Address.Displacement);
+        s32 CompleteDisplacement = Operand->Address.Displacement;
+        Assert(Operand->Address.Terms[0].Register.Count == Operand->Address.Terms[1].Register.Count);
         
-        s32 CompleteDisplacement = DestinationOperand->Address.Displacement;
-        Assert(DestinationOperand->Address.Terms[0].Register.Count == DestinationOperand->Address.Terms[1].Register.Count);
-        
-        u32 Count = DestinationOperand->Address.Terms[0].Register.Index;
+        u32 Count = Operand->Address.Terms[0].Register.Count;
         u32 Mask = ((u32)((-1)) >> (16 + (16 - Count*8)));
         
-        CompleteDisplacement += (Registers[DestinationOperand->Address.Terms[0].Register.Index] & Mask) +
-        (Registers[DestinationOperand->Address.Terms[1].Register.Index] & Mask);
+        CompleteDisplacement += 
+        (Registers[Operand->Address.Terms[0].Register.Index] & Mask) +
+        (Registers[Operand->Address.Terms[1].Register.Index] & Mask);
         
-        Result.Destination = (s32 *)(Memory + CompleteDisplacement);
-        Assert(0);
+        Result = (s32 *)((u8 *)Memory + CompleteDisplacement);
     }
-    else if(DestinationOperand->Type == Operand_Immediate)
+    else if(Operand->Type == Operand_Immediate)
     {
-        Result.Destination = &DestinationOperand->Immediate.Value;
+        Result = &Operand->Immediate.Value;
     }
-    else if(SourceOperand->Type != Operand_None)
-    {
-        Assert(0);
-    }
-    
-    if(0) {}
-    else if(SourceOperand->Type == Operand_Register)
-    {
-        Result.Source = Registers + SourceOperand->Register.Index;
-    }
-    else if(SourceOperand->Type == Operand_Immediate)
-    {
-        Result.Source = &SourceOperand->Immediate.Value;
-    }
-    else if(SourceOperand->Type == Operand_Memory)
-    {
-        Assert(0 && "not implemented yet.");
-    }
-    else if(SourceOperand->Type != Operand_None)
+    else if(Operand->Type != Operand_None)
     {
         Assert(0);
     }
@@ -141,20 +116,17 @@ OperandsToValues(s32 *Registers, u8 *Memory,
     return Result;
 }
 
-
 internal void
-Run8086(psize DisassemblySize, u8 *Disassembly)
+Run8086(psize MemorySize, u8 *Memory)
 {
     s32 Registers[Register_count] = {}; 
     u32 FlagsRegister = 0;
     u32 IPRegister = 0;
     
-    local_persist u8 Memory[1*1024*1024*1024] = {};
-    
-    while(IPRegister < DisassemblySize)
+    while(IPRegister < MemorySize)
     {
         instruction Decoded;
-        Sim86_Decode8086Instruction(DisassemblySize - IPRegister, Disassembly + IPRegister, &Decoded);
+        Sim86_Decode8086Instruction(MemorySize - IPRegister, Memory + IPRegister, &Decoded);
         if(Decoded.Op)
         {
             u32 OldIPRegister = IPRegister;
@@ -164,30 +136,33 @@ Run8086(psize DisassemblySize, u8 *Disassembly)
             printf("Size:%u Op:%s Flags:0x%x ;", Decoded.Size, Sim86_MnemonicFromOperationType(Decoded.Op), Decoded.Flags);
 #endif
             
-            instruction_operand *DestinationOperand = Decoded.Operands;
-            instruction_operand *SourceOperand = Decoded.Operands + 1;
-            operands_to_values_result OperandsValues = OperandsToValues(Registers, Memory, DestinationOperand, SourceOperand);
-            s32 *Destination = OperandsValues.Destination;
-            s32 *Source = OperandsValues.Source;
+            instruction_operand *DestinationOperand = Decoded.Operands + 0;
+            instruction_operand *SourceOperand      = Decoded.Operands + 1;
+            
+            s32 *Destination = OperandToValue(Registers, Memory, DestinationOperand);
+            s32 *Source      = OperandToValue(Registers, Memory, SourceOperand);
             
             if(0) {}
+            else if(Decoded.Op == Op_int3)
+            {
+                Assert(0);
+            }
             else if(Decoded.Op == Op_mov)
             {
-                Assert(SourceOperand->Type == Operand_Register || SourceOperand->Type == Operand_Immediate);
-                
                 s32 Old = *Destination;
                 if(Decoded.Flags & Inst_Wide)
                 {
-                    *Destination = *Source;
+                    *(u16 *)Destination = *(u16 *)Source;
                 }
                 else
                 {
-                    // NOTE(luca): We assume that an immediate will have an Offset of 0.
-                    u32 DestOffset = DestinationOperand->Register.Offset;
-                    u32 SourceOffset = SourceOperand->Register.Offset;
+                    Assert((SourceOperand->Type == Operand_Immediate ||
+                            SourceOperand->Type == Operand_Memory) &&
+                           (SourceOperand->Register.Offset == 0));
+                    Assert((DestinationOperand->Type == Operand_Immediate || DestinationOperand->Type == Operand_Memory) && (DestinationOperand->Register.Offset == 0));
                     
-                    u8 *SourceByte = (u8 *)Source + SourceOffset;
-                    u8 *DestByte = (u8 *)Destination + DestOffset;
+                    u8 *SourceByte = (u8 *)Source + SourceOperand->Register.Offset;
+                    u8 *DestByte   = (u8 *)Destination + DestinationOperand->Register.Offset;
                     
                     *DestByte = *SourceByte;
                 }
@@ -205,7 +180,9 @@ Run8086(psize DisassemblySize, u8 *Disassembly)
                 Assert(DestinationOperand->Type == Operand_Register);
                 Assert(SourceOperand->Type == Operand_Register || SourceOperand->Type == Operand_Immediate);
                 
-                s32 Value = (u16)((u16)(*Destination) - ((u16)(*Source)));
+                s32 Value = ((Decoded.Flags & Inst_Wide) ? 
+                             (u16)((u16)*Destination - ((u16)*Source)) :
+                             (u8)((u8)*Destination - ((u8)*Source)));
                 
                 FlagsFromValue(&FlagsRegister, Decoded.Flags, Value);
             }
@@ -215,7 +192,10 @@ Run8086(psize DisassemblySize, u8 *Disassembly)
                 Assert(SourceOperand->Type == Operand_Register || SourceOperand->Type == Operand_Immediate);
                 
                 s32 Old = *Destination;
-                *Destination = (u16)((u16)(*Destination) - ((u16)(*Source)));
+                *Destination = ((Decoded.Flags & Inst_Wide) ? 
+                                (u16)((u16)*Destination - ((u16)*Source)) :
+                                (u8)((u8)*Destination - ((u8)*Source)));
+                
                 printf(" %s:0x%x->0x%x", 
                        Sim86_RegisterNameFromOperand(&DestinationOperand->Register),
                        Old, *Destination);
@@ -226,10 +206,13 @@ Run8086(psize DisassemblySize, u8 *Disassembly)
             else if(Decoded.Op == Op_add)
             {
                 Assert(DestinationOperand->Type == Operand_Register);
-                Assert(SourceOperand->Type == Operand_Register || SourceOperand->Type == Operand_Immediate);
                 
                 s32 Old = *Destination;
-                *Destination = (u16)((u16)(*Destination) + ((u16)(*Source)));
+                
+                *Destination = ((Decoded.Flags & Inst_Wide) ? 
+                                (u16)((u16)*Destination + ((u16)*Source)) :
+                                (u8)((u8)*Destination + ((u8)*Source)));
+                
                 printf(" %s:0x%x->0x%x", 
                        Sim86_RegisterNameFromOperand(&DestinationOperand->Register),
                        Old, *Destination);
@@ -292,17 +275,20 @@ Run8086(psize DisassemblySize, u8 *Disassembly)
     }
     printf("     ip: 0x%04x (%d)\n", IPRegister, IPRegister);
     
-    char FlagsString[ArrayCount(FlagToCharMapping)] = {};
-    FlagsToString(FlagsString, FlagsRegister);
-    printf("  flags: %s\n", FlagsString);
+    if(FlagsRegister)
+    {
+        char FlagsString[ArrayCount(FlagToCharMapping)] = {};
+        FlagsToString(FlagsString, FlagsRegister);
+        printf("  flags: %s\n", FlagsString);
+    }
 }
 
 void PrintUsage(char *ExePath)
 {
-    fprintf(stderr, "usage: %s [-exec] <assembly>\n", ExePath);
+    printf("usage: %s [-exec] <assembly>\n", ExePath);
 }
 
-int main(int ArgCount, char *Args[])
+int main(int ArgsCount, char *Args[])
 {
     u32 Version = Sim86_GetVersion();
     
@@ -327,56 +313,60 @@ int main(int ArgCount, char *Args[])
     // -exec (also execute the disassembled instructinos)
     
     b32 Execute = false;
+    b32 Dump = false;
     char *FileName = 0;
-    if(ArgCount == 2)
+    for(s32 ArgsIndex = 1;
+        ArgsIndex < ArgsCount;
+        ArgsIndex++)
     {
-        FileName = Args[1];
-        Execute = false;
-        // Print disassembly from assembly
-    }
-    else if(ArgCount == 3)
-    {
-        char *Command = Args[1];
-        FileName = Args[2];
-        if(!strcmp(Command, "-exec"))
+        char *Command = Args[ArgsIndex];
+        if(0) {}
+        else if(!strcmp(Command, "-exec"))
         {
             Execute = true;
         }
-        else
+        else if(!strcmp(Command, "-dump"))
         {
-            fprintf(stderr, "ERROR: Unknown command %s.\n", Command);
-            PrintUsage(Args[0]);
+            Dump = true;
+        }
+        else 
+        {
+            FileName = Command;
         }
     }
-    else
-    {
-        PrintUsage(Args[0]);
-    }
     
-    u8 Memory[1024] = {};
     if(FileName)
     {
         FILE *File = fopen(FileName, "rb");
         if(File)
         {
-            psize Result = fread(Memory, 1, sizeof(Memory), File);
+            psize BytesWritten = fread(GlobalMemory, 1, sizeof(GlobalMemory), File);
             fclose(File);
             
             if(Execute)
             {
                 printf("--- %s execution ---\n", FileName);
                 
-                Run8086(Result, Memory);
+                Run8086(BytesWritten, GlobalMemory);
+                
+                if(Dump)
+                {
+                    // NOTE(luca): We have to add ".data" or Gimp will throw an error. 
+                    FILE *DumpFile = fopen("sim86_memory_0.data", "wb");
+                    fwrite(GlobalMemory, 1, sizeof(GlobalMemory), DumpFile);
+                    fclose(DumpFile);
+                }
+                
             }
             else
             {
-                fprintf(stderr, "ERROR: Disassembling not implemented yet.\n");
+                printf("ERROR: Disassembling not implemented yet.\n");
             }
             
         }
         else
         {
-            fprintf(stderr, "ERROR: Unable to open %s.\n", FileName);
+            printf("ERROR: Unable to open %s.\n", FileName);
             PrintUsage(Args[0]);
         }
     }
