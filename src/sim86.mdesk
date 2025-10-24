@@ -1,0 +1,32 @@
+
+@table(name, str) sim86_flags_mapping:
+{
+ { Carry,          "C", }
+ { Parity,         "P", }
+ { AuxiliaryCarry, "A", }
+ { Zero,           "Z", }
+ { Sign,           "S", }
+ { Overflow,       "O", }
+ { Interrupt,      "I", }
+ { Direction,      "D", }
+ { Trap,           "T", }
+}
+
+@table(name, title) songs:
+{
+ { French,  "French Blues"  },
+ { Russian, "Russian Blues" },
+}
+
+@table_gen_enum_flags(songs, name) flags_songs
+@table_gen_data(songs, `char *`, title) songs_strings
+
+@table_gen_enum_flags(sim86_flags_mapping, name) flags_8086
+@table_gen_data(sim86_flags_mapping, `char *`, str) flags_8086_strings
+
+@table_gen_enum sim86_enum:
+{
+ @expand(sim86_flags_mapping mapping)
+  `Sim86_$(mapping.name),`
+ `Sim86_Count`
+}

@@ -3,14 +3,17 @@
 ThisDir="$(dirname "$(readlink -f "$0")")"
 cd "$ThisDir"
 
+mkdir -p ../build
+mkdir -p generated
+
 Compiler="clang"
 
 CompilerFlags="
+-I./libs/metadesk
 -g
 -fdiagnostics-absolute-paths
 -nostdinc++
 -DSIM86_INTERNAL
--fsanitize=undefined
 "
 
 WarningFlags="
@@ -19,24 +22,23 @@ WarningFlags="
 -Wno-unused-label
 -Wno-unused-variable
 -Wno-unused-function
+-Wno-unused-value
 -Wno-unused-but-set-variable
 -Wno-missing-field-initializers
 -Wno-write-strings
 "
 
-Libs="./reference_decoder/sim86_lib.cpp"
+Libs="./libs/reference_decoder/sim86_lib.cpp"
 
-if false
-then
- Source="./shared_library_test.cpp"
- printf '%s\n' "$Source"
- $Compiler $CompilerFlags $WarningFlags \
-  -o ../build/shared_library_test \
-  $Libs $Source
-fi
+printf '[metadata generation]\n'
+Source="sim86_meta.c"
+$Compiler $CompilerFlags $WarningFlags \
+ -o ../build/sim86_meta \
+ $Source
+../build/sim86_meta ./sim86.mdesk > ./generated/generated.cpp
 
+printf '[%s build]\n' "$Compiler" 
 Source="sim86.cpp"
-printf '%s\n' "$Source"
 $Compiler $CompilerFlags $WarningFlags \
  -o ../build/sim86 \
  $Libs $Source

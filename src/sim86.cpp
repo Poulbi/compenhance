@@ -4,7 +4,8 @@
 #include "sim86.h"
 #include "sim86_shared.h"
 
-global_variable u8 FlagToCharMapping[] = "CPAZSOIDT";
+#include "generated/generated.cpp"
+
 global_variable u8 GlobalMemory[1*1024*1024] = {};
 
 internal void
@@ -25,11 +26,11 @@ FlagsToString(char *Buffer, u32 Flags)
 {
     u32 Length = 0;
     
-    for(u32 MappingIndex = 0;
-        MappingIndex < ArrayCount(FlagToCharMapping);
+    for(s32 MappingIndex = 0;
+        MappingIndex < flags_8086_strings_count;
         MappingIndex++)
     {
-        u8 Char = FlagToCharMapping[MappingIndex];
+        u8 Char = flags_8086_strings[MappingIndex][0];
         b32 IsBitSet = (Flags & 1);
         Flags >>= 1;
         if(IsBitSet)
@@ -41,6 +42,7 @@ FlagsToString(char *Buffer, u32 Flags)
     return Length;
 }
 
+// Sets flags by checking the destination value of the register.
 internal void
 FlagsFromValue(u32 *FlagsRegister, u32 InstructionFlags, s32 Value)
 {
@@ -71,8 +73,8 @@ FlagsFromValue(u32 *FlagsRegister, u32 InstructionFlags, s32 Value)
     // Carry for bottom 8 bits
     if(*FlagsRegister != OldFlagsRegister)
     {
-        char OldFlagsString[ArrayCount(FlagToCharMapping)] = {};
-        char FlagsString[ArrayCount(FlagToCharMapping)] = {};
+        char OldFlagsString[ArrayCount(flags_8086_strings)] = {};
+        char FlagsString[ArrayCount(flags_8086_strings)] = {};
         FlagsToString(OldFlagsString, OldFlagsRegister);
         FlagsToString(FlagsString, *FlagsRegister);
         
@@ -277,7 +279,7 @@ Run8086(psize MemorySize, u8 *Memory)
     
     if(FlagsRegister)
     {
-        char FlagsString[ArrayCount(FlagToCharMapping)] = {};
+        char FlagsString[ArrayCount(flags_8086_strings)] = {};
         FlagsToString(FlagsString, FlagsRegister);
         printf("  flags: %s\n", FlagsString);
     }
