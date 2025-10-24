@@ -1,0 +1,29 @@
+version(2);
+project_name = "sim8086";
+patterns = {
+    "*.c",
+    "*.cpp",
+    "*.h",
+    "*.m",
+    "*.bat",
+    "*.sh",
+    "*.4coder",
+};
+blacklist_patterns = {
+    "_old.*",
+};
+
+paths =
+{
+    { .path = ".",     .recursive = false, .relative = true, },
+    { .path = "src",   .recursive = true , .relative = true, },
+};
+
+load_paths = {
+    .win = paths,
+    .linux = paths,
+    .mac = paths,
+};
+
+// commands = {};
+// fkey_command = {};
