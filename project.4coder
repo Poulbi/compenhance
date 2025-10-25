@@ -2,6 +2,7 @@ version(2);
 project_name = "sim8086";
 patterns = {
     "*.c",
+    "*.mdesk",
     "*.cpp",
     "*.h",
     "*.m",

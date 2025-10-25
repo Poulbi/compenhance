@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "sim86.h"
-#include "sim86_shared.h"
+#include "./libs/reference_decoder/sim86_lib.cpp"
 
+#include "sim86.h"
+#include "clocks_table.inl"
 #include "generated/generated.cpp"
 
 global_variable u8 GlobalMemory[1*1024*1024] = {};
@@ -82,6 +83,19 @@ FlagsFromValue(u32 *FlagsRegister, u32 InstructionFlags, s32 Value)
     }
 }
 
+s32 GetCompleteDisplacement(s32 *Registers, instruction_operand *Operand)
+{
+    s32 CompleteDisplacement = Operand->Address.Displacement;
+    
+    u32 Count = Operand->Address.Terms[0].Register.Count;
+    u32 Mask = ((u32)((-1)) >> (16 + (16 - Count*8)));
+    CompleteDisplacement += 
+    (Registers[Operand->Address.Terms[0].Register.Index] & Mask) +
+    (Registers[Operand->Address.Terms[1].Register.Index] & Mask);
+    
+    return CompleteDisplacement;
+}
+
 internal s32 *
 OperandToValue(s32 *Registers, u8 *Memory, instruction_operand *Operand)
 {
@@ -94,16 +108,7 @@ OperandToValue(s32 *Registers, u8 *Memory, instruction_operand *Operand)
     }
     else if(Operand->Type == Operand_Memory)
     {
-        s32 CompleteDisplacement = Operand->Address.Displacement;
-        Assert(Operand->Address.Terms[0].Register.Count == Operand->Address.Terms[1].Register.Count);
-        
-        u32 Count = Operand->Address.Terms[0].Register.Count;
-        u32 Mask = ((u32)((-1)) >> (16 + (16 - Count*8)));
-        
-        CompleteDisplacement += 
-        (Registers[Operand->Address.Terms[0].Register.Index] & Mask) +
-        (Registers[Operand->Address.Terms[1].Register.Index] & Mask);
-        
+        s32 CompleteDisplacement = GetCompleteDisplacement(Registers, Operand);
         Result = (s32 *)((u8 *)Memory + CompleteDisplacement);
     }
     else if(Operand->Type == Operand_Immediate)
@@ -118,12 +123,32 @@ OperandToValue(s32 *Registers, u8 *Memory, instruction_operand *Operand)
     return Result;
 }
 
+b32 IsAccumulator(instruction_operand *Operand)
+{
+    b32 Result = ((Operand->Type == Operand_Register) &&
+                  (Operand->Register.Index == Register_a));
+    return Result;
+}
+
+b32 IsMatchingOp(instruction_operand *Operand, instruction_clocks_operand_type Type)
+{
+    b32 Matching = false;
+    
+    Matching = Matching || (Type == InstructionClocksOperand_Memory && Operand->Type == Operand_Memory);
+    Matching = Matching || (Type == InstructionClocksOperand_Register && Operand->Type == Operand_Register);
+    Matching = Matching || (Type == InstructionClocksOperand_Accumulator && IsAccumulator(Operand));
+    Matching = Matching || (Type == InstructionClocksOperand_Immediate && Operand->Type == Operand_Immediate);
+    
+    return Matching;
+}
+
 internal void
 Run8086(psize MemorySize, u8 *Memory)
 {
     s32 Registers[Register_count] = {}; 
     u32 FlagsRegister = 0;
     u32 IPRegister = 0;
+    u32 ElapsedClocks = 0;
     
     while(IPRegister < MemorySize)
     {
@@ -135,11 +160,109 @@ Run8086(psize MemorySize, u8 *Memory)
             IPRegister += Decoded.Size;
             
 #if SIM86_INTERNAL           
-            printf("Size:%u Op:%s Flags:0x%x ;", Decoded.Size, Sim86_MnemonicFromOperationType(Decoded.Op), Decoded.Flags);
+            printf("%s ;", Sim86_MnemonicFromOperationType(Decoded.Op));
 #endif
             
             instruction_operand *DestinationOperand = Decoded.Operands + 0;
             instruction_operand *SourceOperand      = Decoded.Operands + 1;
+            
+            u32 AddedClocks = 0;
+            for(u32 ClocksIndex = 0;
+                ClocksIndex < ArrayCount(ClocksTable);
+                ClocksIndex++)
+            {
+                instruction_clocks *Clocks = ClocksTable + ClocksIndex;
+                
+                b32 Matching = Decoded.Op == Clocks->Op; 
+                Matching = Matching && IsMatchingOp(DestinationOperand, Clocks->Operands[0]);
+                Matching = Matching && IsMatchingOp(SourceOperand, Clocks->Operands[1]);
+                if(Matching)
+                {
+                    AddedClocks += Clocks->Clocks;
+                    
+                    if(Clocks->EffectiveAddress)
+                    {
+                        instruction_operand *MemoryOperand = ((DestinationOperand->Type == Operand_Memory) ? DestinationOperand : SourceOperand);
+                        u32 FirstIndex = MemoryOperand->Address.Terms[0].Register.Index;
+                        u32 SecondIndex = MemoryOperand->Address.Terms[1].Register.Index;
+                        
+                        // Only displacement
+                        if(FirstIndex == 0 && SecondIndex == 0)
+                        {
+                            AddedClocks += 6;
+                        }
+                        // Base or index
+                        else if(FirstIndex == 0 || SecondIndex == 0)
+                        {
+                            // Base or index only
+                            if(MemoryOperand->Address.Displacement == 0)
+                            {
+                                AddedClocks += 5;
+                            }
+                            // Base or index + displacement
+                            else
+                            {
+                                AddedClocks += 9;
+                            }
+                        }
+                        // Base + index
+                        else if(MemoryOperand->Address.Displacement == 0)
+                        {
+                            /*
+                            bp+di bx+si 7
+                                bp+si bx+di 8
+                                */
+                            if((FirstIndex == Register_bp && SecondIndex == Register_di) ||
+                               (FirstIndex == Register_b && SecondIndex == Register_si))
+                            {
+                                AddedClocks += 7;
+                            }
+                            else
+                            {
+                                AddedClocks += 8;
+                            }
+                        }
+                        // Base + index + displacement
+                        else
+                        {
+                            /*
+                            bp+di bx+si 11
+                                bp+si bx+di 12
+                                */
+                            if((FirstIndex == Register_bp && SecondIndex == Register_di) ||
+                               (FirstIndex == Register_b && SecondIndex == Register_si))
+                            {
+                                AddedClocks += 11;
+                            }
+                            else
+                            {
+                                AddedClocks += 12;
+                            }
+                        }
+                        
+                    }
+                    
+                    // Add transfer penalty
+                    if(Clocks->Transfers && (Decoded.Flags & Inst_Wide))
+                    {
+                        instruction_operand *MemoryOperand = ((DestinationOperand->Type == Operand_Memory) ? DestinationOperand : SourceOperand);
+                        s32 Displacement = GetCompleteDisplacement(Registers, MemoryOperand);
+                        if(Displacement & 1)
+                        {
+                            AddedClocks += 4*Clocks->Transfers;
+                        }
+                    }
+                    
+                    break;
+                }
+            }
+            
+#if 0            
+            Assert(AddedClocks);
+#endif
+            
+            ElapsedClocks += AddedClocks;
+            printf(" clocks: +%d = %d", AddedClocks, ElapsedClocks);
             
             s32 *Destination = OperandToValue(Registers, Memory, DestinationOperand);
             s32 *Source      = OperandToValue(Registers, Memory, SourceOperand);
@@ -207,8 +330,6 @@ Run8086(psize MemorySize, u8 *Memory)
             }
             else if(Decoded.Op == Op_add)
             {
-                Assert(DestinationOperand->Type == Operand_Register);
-                
                 s32 Old = *Destination;
                 
                 *Destination = ((Decoded.Flags & Inst_Wide) ? 
@@ -257,7 +378,7 @@ Run8086(psize MemorySize, u8 *Memory)
         
     }
     
-    printf("Final registers:\n");
+    printf("\nFinal registers:\n");
     for(u32 RegisterIndex = Register_a;
         RegisterIndex < Register_ds + 1;
         RegisterIndex++)

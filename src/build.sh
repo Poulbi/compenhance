@@ -28,17 +28,14 @@ WarningFlags="
 -Wno-write-strings
 "
 
-Libs="./libs/reference_decoder/sim86_lib.cpp"
-
 printf '[metadata generation]\n'
-Source="sim86_meta.c"
 $Compiler $CompilerFlags $WarningFlags \
  -o ../build/sim86_meta \
- $Source
+ sim86_meta.c
 ../build/sim86_meta ./sim86.mdesk > ./generated/generated.cpp
 
 printf '[%s build]\n' "$Compiler" 
 Source="sim86.cpp"
 $Compiler $CompilerFlags $WarningFlags \
  -o ../build/sim86 \
- $Libs $Source
+  sim86.cpp

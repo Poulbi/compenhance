@@ -123,6 +123,13 @@ int main(int ArgsCount, char *Args[])
                     MD_S8ListPush(Arena, &Stream, MD_S8Lit("};\n\n"));
                 }
                 
+#if 0                
+                if(MD_NodeHasTag(Node, MD_S8Lit("table"), 0))
+                {
+                    Assert(0);
+                }
+#endif
+                
                 if(MD_NodeHasTag(Node, MD_S8Lit("table_gen_enum"), 0))
                 {
                     // Header
