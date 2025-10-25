@@ -1,16 +1,3 @@
-enum flags_songs
-{
- Flag_French = (1 << 0),
- Flag_Russian = (1 << 1),
-};
-
-int songs_strings_count = 2;
-char *songs_strings[] =
-{
- "French Blues",
- "Russian Blues",
-};
-
 enum flags_8086
 {
  Flag_Carry = (1 << 0),

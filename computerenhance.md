@@ -732,11 +732,16 @@ Calling conventions and ABIs are rules so code can operate with other code when 
 You can spot memory access by brackets '[]'.
 Either a load/store or LEA  or prefetch.  LEA does a load with a temp registers.
 You can use the stack as regular memory by saving `sp` (stack pointer) to a register and offsetting from it.
-A stack frame is a context view of a "call".
+A stack frame is the part of the stack created by a function.
 
 # 36. [Performance Excuses Debunked](https://www.computerenhance.com/p/performance-excuses-debunked)
 # 37. [Estimating Cycles](https://www.computerenhance.com/p/estimating-cycles)
+By using estimation you can know what your performance *should* be.
+clocks=cycles
+
 # 38. [Monday Q&A #10 (2023-05-08)](https://www.computerenhance.com/p/monday-q-and-a-10-2023-05-08)
+With SIMD using smaller numbers will be faster.
+
 # 39. [From 8086 to x64](https://www.computerenhance.com/p/from-8086-to-x64)
 # 40. [8086 Internals Poll](https://www.computerenhance.com/p/8086-internals-poll)
 # 41. [How to Play Trinity](https://www.computerenhance.com/p/how-to-play-trinity)
