@@ -157,7 +157,6 @@ Run8086(psize MemorySize, u8 *Memory)
         if(Decoded.Op)
         {
             u32 OldIPRegister = IPRegister;
-            IPRegister += Decoded.Size;
             
 #if SIM86_INTERNAL           
             printf("%s ;", Sim86_MnemonicFromOperationType(Decoded.Op));
@@ -300,6 +299,42 @@ Run8086(psize MemorySize, u8 *Memory)
                 }
 #endif
             }
+            else if(Decoded.Op == Op_ret)
+            {
+                printf("\n");
+                printf("STOPONRET: Return encountered at address %d.\n", IPRegister);
+                
+                break;
+            }
+            else if(Decoded.Op == Op_inc)
+            {
+                Assert(DestinationOperand->Type == Operand_Register);
+                Assert(SourceOperand->Type == Operand_None);
+                *Destination += 1;
+            }
+            else if(Decoded.Op == Op_test)
+            {
+                
+                Assert(DestinationOperand->Type == Operand_Register);
+                Assert(SourceOperand->Type == Operand_Register || SourceOperand->Type == Operand_Immediate);
+                
+                s32 Value =((Decoded.Flags & Inst_Wide) ? 
+                            (u16)((u16)*Destination & ((u16)*Source)) :
+                            (u8)((u8)*Destination & ((u8)*Source))); 
+                FlagsFromValue(&FlagsRegister, Decoded.Flags, Value);
+            }
+            else if(Decoded.Op == Op_xor)
+            {
+                
+                Assert(DestinationOperand->Type == Operand_Register);
+                Assert(SourceOperand->Type == Operand_Register || SourceOperand->Type == Operand_Immediate);
+                
+                s32 Value =((Decoded.Flags & Inst_Wide) ? 
+                            (u16)((u16)*Destination ^ ((u16)*Source)) :
+                            (u8)((u8)*Destination ^ ((u8)*Source))); 
+                FlagsFromValue(&FlagsRegister, Decoded.Flags, Value);
+                *Destination = Value;
+            }
             else if(Decoded.Op == Op_cmp)
             {
                 Assert(DestinationOperand->Type == Operand_Register);
@@ -360,6 +395,8 @@ Run8086(psize MemorySize, u8 *Memory)
             {
                 Assert(0 && "Op not implemented yet.");
             }
+            
+            IPRegister += Decoded.Size;
             
 #if SIM86_INTERNAL
             printf(" ip:0x%x->0x%x", OldIPRegister, IPRegister);
