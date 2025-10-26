@@ -28,7 +28,7 @@ Only learning about how performance works is enough.
 
 # Solution
 - Keep result of instructions in mind, not code
-- Learn what the maximum speed of something should be```
+- Learn what the maximum speed of something should be
 
 # 4. [Waste](https://www.computerenhance.com/p/waste)
 Instructions that do not need to be there.
@@ -53,7 +53,7 @@ Key points:
 - to measure overhead + loop we can measure cycles
   - more instructions != more time
 
-Python had 180x instructions and was 130x slower.```
+Python had 180x instructions and was 130x slower.
 
 # 5. [Instructions Per Clock](https://www.computerenhance.com/p/instructions-per-clock)
 *speed of instructions*
@@ -76,13 +76,13 @@ Python had 180x instructions and was 130x slower.```
 
 Reducing ratio of loop overhead / work
 - example: loop unrolling
-  ```c
+```c
     for (i = 0; i < count; i +=2)
     {
      sum += input[i];
      sum += input[i + 1];
     }
-  ```
+```
 Weird that it would go until to 1x add per cycle.
 - what are the chances? overhead??
 
@@ -98,7 +98,7 @@ Multiple chains can help break through limits.
 - "boosting the IPL"
 
 CPUs are designed for more computation so boosting IPL in a loop that
-does not do a lot of computation will bring less benefits.```
+does not do a lot of computation will bring less benefits.
 
 # 6. [Monday Q&A (2023-02-05)](https://www.computerenhance.com/p/monday-q-and-a-2023-02-05)
 # JIT
@@ -168,7 +168,7 @@ input[3]
 input += 4
 ```
 # Three-based addition:
-- common technique to work out a dependency chain```
+- common technique to work out a dependency chain
 
 # 7. [Single Instruction, Multiple Data](https://www.computerenhance.com/p/single-instruction-multiple-data)
 *Amount of instructions*
@@ -202,7 +202,7 @@ input += 4
 
 # Difficulty
 - SIMD does not care about how data is organized
-- easy with adds```
+- easy with adds
 
 # 8. [Caching](https://www.computerenhance.com/p/caching)
 *speed of instructions*
@@ -479,14 +479,14 @@ Because there are many dependencies on loads it is very important.
 # Forcing out of memory
 - bandwith does not increase a lot when using main memory
   - depending on the chip
-- L3 cache and main memory are shared (not big speed ups)```
+- L3 cache and main memory are shared (not big speed ups)
 
 # 11. [Python Revisited](https://www.computerenhance.com/p/python-revisited)
 Assembly is what determines the speed.
 
 # Python
 - doing every sum in python is slow
-- numpy is faster when you have supplied the array with a type```
+- numpy is faster when you have supplied the array with a type
 # 12. [Monday Q&A #3 (2023-02-20)](https://www.computerenhance.com/p/monday-q-and-a-3-2023-02-20)
 # Hyperthreading & Branch prediction
 - hyperthreads ::
@@ -550,14 +550,14 @@ Assembly is what determines the speed.
 
 
 # How to get memory bandwidth
-- https://github.com/cmuratori/blandwidth```
+- https://github.com/cmuratori/blandwidth
 
 # 13. [The Haversine Distance Problem](https://www.computerenhance.com/p/the-haversine-distance-problem)
 - Computing arc length between two coordinates.
 - You want to do the math first.
     - CPU is made for it
 - Second is the *Input*
-- Reading the data can take a long time.```
+- Reading the data can take a long time.
 
 # 14. ["Clean" Code, Horrible Performance](https://www.computerenhance.com/p/clean-code-horrible-performance)
 
@@ -740,16 +740,38 @@ By using estimation you can know what your performance *should* be.
 clocks=cycles
 
 # 38. [Monday Q&A #10 (2023-05-08)](https://www.computerenhance.com/p/monday-q-and-a-10-2023-05-08)
-With SIMD using smaller numbers will be faster.
+With SIMD using smaller bit-widths will be faster.
+For better cycle estimations it's better to try and simulate the microcode which has been reverse engineered from die shots.
+2 transfers can mean read + write, eg. `add [bx], 20`.
+There is microcode for loads and stores but some lines get processed and "skipped" which can account for a cycle.
 
 # 39. [From 8086 to x64](https://www.computerenhance.com/p/from-8086-to-x64)
+E prefix "widens" the register to 32 bits for backwards compatibility.  Analogously, the R prefix "widens" the register to 64 bits.
+R8-15 or the new 64 bits registers.  Suffixes: B-8, W-16, D-32, byte, word, double word, quad word
+You can use any registers for the 2 terms of effective addressing.  One of the terms can be a scalar for multiplying.  PTR is optional for specifying it's memory.
+
 # 40. [8086 Internals Poll](https://www.computerenhance.com/p/8086-internals-poll)
+
 # 41. [How to Play Trinity](https://www.computerenhance.com/p/how-to-play-trinity)
+
 # 42. [Monday Q&A #11 (2023-05-15)](https://www.computerenhance.com/p/monday-q-and-a-11-2023-05-15)
+`mov edi, edi` zeroes the upper bits of a register.  Since the ABI specifies edi as a parameter it needs to be 0.
+Redundant register moves do not impact the backend performance (where dependency chains get resolved).
+There are instructions that are not useful anymore.
+Some instructions cannot be accessed.
+Theres is `sgx` extension that allows to do encrypted memory, transactional memory system.
+SIMD registers can be split in lanes.  But in "normal" registers this is not supported anymore.
+A segfault is an interrupt from the interrupt table. Eg. paging in unmapped memory
+
 # 43. [8086 Simulation Code Review](https://www.computerenhance.com/p/8086-simulation-code-review)
+
 # 44. [Part One Q&A and Homework Showcase](https://www.computerenhance.com/p/part-one-q-and-a-and-homework-showcase)
+
 # 45. [The First Magic Door](https://www.computerenhance.com/p/the-first-magic-door)
+
 # 46. [Monday Q&A #12 (2023-05-22)](https://www.computerenhance.com/p/monday-q-and-a-12-2023-05-22)
+TODO: more information about 8086 misc.
+
 # 47. [Generating Haversine Input JSON](https://www.computerenhance.com/p/generating-haversine-input-json)
 # 48. [Monday Q&A #13 (2023-05-29)](https://www.computerenhance.com/p/monday-q-and-a-13-2023-05-29)
 # 49. [Writing a Simple Haversine Distance Processor](https://www.computerenhance.com/p/writing-a-simple-haversine-distance)
