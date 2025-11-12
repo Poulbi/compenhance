@@ -1,3 +1,4 @@
+
 #if __clang__
 # define COMPILER_CLANG 1
 #elif _MSC_VER
