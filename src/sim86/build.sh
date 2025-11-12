@@ -1,9 +1,9 @@
 #!/bin/sh
 
-ThisDir="$(dirname "$(readlink -f "$0")")"
-cd "$ThisDir"
+cd "$(dirname "$(readlink -f "$0")")"
 
-mkdir -p ../build
+Build="../../build"
+mkdir -p "$Build"
 mkdir -p generated
 
 Compiler="clang"
@@ -30,12 +30,13 @@ WarningFlags="
 
 printf '[metadata generation]\n'
 $Compiler $CompilerFlags $WarningFlags \
- -o ../build/sim86_meta \
+ -o "$Build"/sim86_meta \
  sim86_meta.c
-../build/sim86_meta ./sim86.mdesk > ./generated/generated.cpp
+"$Build"/sim86_meta ./sim86.mdesk > ./generated/generated.cpp
 
+printf '[debug mode]\n'
 printf '[%s build]\n' "$Compiler" 
 Source="sim86.cpp"
 $Compiler $CompilerFlags $WarningFlags \
- -o ../build/sim86 \
+ -o "$Build"/sim86 \
   sim86.cpp

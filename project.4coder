@@ -1,5 +1,5 @@
 version(2);
-project_name = "sim8086";
+project_name = "Computer Enhance";
 patterns = {
     "*.c",
     "*.mdesk",
@@ -17,7 +17,7 @@ blacklist_patterns = {
 paths =
 {
     { .path = ".",     .recursive = false, .relative = true, },
-    { .path = "src",   .recursive = true , .relative = true, },
+    { .path = "src/haversine",   .recursive = true , .relative = true, },
 };
 
 load_paths = {

@@ -2,11 +2,11 @@
 
 # 2. [Performance-Aware Programming Series Begins February 1st](https://www.computerenhance.com/p/performance-aware-programming-series)
 # 3. [Welcome to the Performance-Aware Programming Series!](https://www.computerenhance.com/p/welcome-to-the-performance-aware)
-# Optimization
+## Optimization
 optimization = Maximizing performance of software on hardware.
 - used to be complicated (years ago) = traditional
 
-# Problem
+## Problem
 People think performance is:
 - not worth it
 - too hard
@@ -14,19 +14,19 @@ People think performance is:
 True for traditional optimzation.
 - actually results in extremely slow programming.
 
-# What
+## What
 Only learning about how performance works is enough.
 - What decisions affect performance?
 
-# Affecting performance
+## Affecting performance
 1. amount of instructions: reduce number of instructions
 2. speed of instructions: make CPU process instructions faster
 
-# Decline
+## Decline
 - CPUs became more complicated.
 - unaware of the resulting instructions of higher-level languages
 
-# Solution
+## Solution
 - Keep result of instructions in mind, not code
 - Learn what the maximum speed of something should be
 
@@ -58,7 +58,7 @@ Python had 180x instructions and was 130x slower.
 # 5. [Instructions Per Clock](https://www.computerenhance.com/p/instructions-per-clock)
 *speed of instructions*
 
-# IPC/ILP
+## IPC/ILP
 - **Instructions Per Clock**
   - instructions per clock cycle
   - specific to one instruction
@@ -101,7 +101,7 @@ CPUs are designed for more computation so boosting IPL in a loop that
 does not do a lot of computation will bring less benefits.
 
 # 6. [Monday Q&A (2023-02-05)](https://www.computerenhance.com/p/monday-q-and-a-2023-02-05)
-# JIT
+## JIT
 - compile code "upfront"
 - have extra information
   - knows context in which it is compiled
@@ -114,7 +114,7 @@ Waste:
 JAVA may have waste as well, but the bytecode was designed as
 "something that could be executed faster".
 
-# No test harness yet.
+## No test harness yet.
 Read Time Stamp Counter (rtsc):
 - allows to read chip-wide counter
 - dangerous against turbo boosts
@@ -125,7 +125,7 @@ We have to move by stage so we can focus on everything step by step.
 The reality is that there already is a well grown userbase.
 - who cares!  We will make it performant.
 
-# Micro-OPs go to execution ports
+## Micro-OPs go to execution ports
 - each port can do X operations
 - different instructions can be contenders for a port
 - looking at the port usage will show for unrolling a loop
@@ -133,23 +133,16 @@ The reality is that there already is a well grown userbase.
 - sometimes there is a limit on how instructions can be sent
 
 
-# Unrolling
+## Unrolling
 - most compilers can unroll the loop for you
   - clang can screw this up
 
 
-# Why *minimum* adds per cycle
+## Why *minimum* adds per cycle
 - thinking about "opportunities"
-- mean, median will not find out the average
-- + fastest you can show what you are pointing to
-  - mean + fastest
-- analyzing the behaviour of the hardware
-- *stars need to align*
-- when using fastest you converge to the analysis 
-- *educational*
-- mean and medium or for "mixtures"
-  - used together for fastest when optimizing
-
+- mean & median will not converge to the actual cycle count the CPU can do them.
+- *fastest* will get to the actual adds/cycle the CPU can do
+- median & mean gives you typical behavior
 
 Assembly -> Micro-OPs -> CPU
 
@@ -167,19 +160,19 @@ input[2]
 input[3]
 input += 4
 ```
-# Three-based addition:
+## Three-based addition:
 - common technique to work out a dependency chain
 
 # 7. [Single Instruction, Multiple Data](https://www.computerenhance.com/p/single-instruction-multiple-data)
 *Amount of instructions*
 
-# SIMD
+## SIMD
 - *Single Instruction, Multiple Data*
 - One instruction can act on multiple data
 - SSE in x64
 - can be used together with IPC
 
-# PADDD
+## PADDD
 - Packed ADD D-word
 - "Wide" instruction
   - can use multiple accumulators
@@ -187,7 +180,7 @@ input += 4
   - e.g. extracting dependency chains
 - ![vector example](img/vector_paddd.png)
 
-# Subsets
+## Subsets
 |---------+-----------+-----------|
 | subset  | bit width | supported |
 |---------+-----------+-----------|
@@ -200,7 +193,7 @@ input += 4
 - Making smaller instructions can use bit width.
 - Typical that you cannot get full x improvements (x2, x4, ...)
 
-# Difficulty
+## Difficulty
 - SIMD does not care about how data is organized
 - easy with adds
 
@@ -217,49 +210,49 @@ Because there are many dependencies on loads it is very important.
 - *Cache*!
   - Way faster than main memory (DIMMs)
 
-# Cache
+## Cache
 - Register file :
   - produce values really quickly and feed them to registers
   - maximum speed
   - few hundred values at most
 
 # 9. [Monday Q&A #2 (2023-02-12)](https://www.computerenhance.com/p/monday-q-and-a-2-2023-02-12)
-# Why would the register renamer not solve the dependencies?
+## Why would the register renamer not solve the dependencies?
 - Because there is a "literal" dependency
 - *register renamer* fixes "fake" dependencies
 
-# Python over cpp
+## Python over cpp
 - cpp is quite bad, but allows control over the output
 - python is good for sketching and libraries
 
-# Hardware jungle
+## Hardware jungle
 - Coding towards the minimum specification
   - generally true
 - Design hotspots for platforms (e.g. Xbox, PS5, ...)
 - vectorizable, enough in loop for IPC
   - focus on things that work on all CPUs
 
-# More complicated loops
+## More complicated loops
 - For now it's demonstrations
 - everything can be optimized (:
     
-# How can you tell if you are wasteful?
+## How can you tell if you are wasteful?
 - profiling
   - "how much time spending in this loop?"
 
-# Lanes and bottlenecks during design
+## Lanes and bottlenecks during design
 - how many of "those" can I do per second
   - which is the limiting factor = bottleneck
 
-# Asymptotic performance
+## Asymptotic performance
 - also important
 
-# Power usage reduction
+## Power usage reduction
 - in general achieved through reduced instructions
 - same thing the *majority* of the time
   - reducing waste
 
-# Signed and unsigned integers
+## Signed and unsigned integers
 - are the same because of *two's complement*
 - except for:
   - mul/div/gt
@@ -267,14 +260,14 @@ Because there are many dependencies on loads it is very important.
 - name of instructions tells the compiler which instruction to use
 - unsigned/signed is not needed and could be replaced by a different operator
 
-# Can compilers SIMD?
+## Can compilers SIMD?
 - gcc and clang are agressive at vectorization
   - generally better than nothing
 
-# SIMD: AMD vs Intel
+## SIMD: AMD vs Intel
 - no. (long-term)
 
-# Are unused registers ignored?
+## Are unused registers ignored?
 - modern chips (CPU/GPU) have two types of registers:
   - Scalar
     - slot
@@ -287,7 +280,7 @@ Because there are many dependencies on loads it is very important.
   - tip: *SIMD if you can*
 
 
-# CPU vs GPU
+## CPU vs GPU
 - GPUs are the same for parallellism but with different trade-offs
   - 1024bit Vectors / Wide execution units
   - CPU
@@ -306,33 +299,33 @@ Because there are many dependencies on loads it is very important.
 - Switch can be difficult (talkin between both)
   - unless APU
 
-# Non-deterministic architectures
+## Non-deterministic architectures
 - You cannot depend on timings
 - Potentially depends on the room's temperature
 - Things run until they cannot melt
 
-# Arm
+## Arm
 - everything transfers
 - Instructions name change
 
-# SIMD without SIMD
+## SIMD without SIMD
 - leave one bit for overflow
 - SIMD registers handle overflows and carrying
   
-# Slowdown when 256/512 registers
+## Slowdown when 256/512 registers
 - Most machines downclocks when using AVX
   
-# Hardware Jungle: SIMD edition
+## Hardware Jungle: SIMD edition
 - 'cpu_id' tells what instructions sets the CPU supports
   - set function pointers accordingly
 - SHIM? 
 
 
-# Micro-OP debugging
+## Micro-OP debugging
 - assembly instructions are a layer of debugging on top of micro-OPs
 - You cannot micro-op debug 
 
-# Out-of-order CPUs
+## Out-of-order CPUs
 - only if no one can tell the order was violated
 - inside a window
 - limited:
@@ -341,7 +334,7 @@ Because there are many dependencies on loads it is very important.
 - rolling window
   - waiting for instructions to be done
 
-# SIMD dataset requirements
+## SIMD dataset requirements
 - "Shot"
 - "Tail"
 - You can padd you inputs
@@ -353,22 +346,22 @@ Because there are many dependencies on loads it is very important.
   - Vector: VLen (Vector Length) says how much elements
 - Scaler loop in worst case scenario
 
-# Cost of SIMD
+## Cost of SIMD
 - 128 can always be used
 - clock penalty goes away over time
 - more latent
 
-# Latency vs Pipelining
+## Latency vs Pipelining
 - Latency can be beaten by pipelining
 - if the instructions are independent then the latency does not matter
 
-# Instructions Limits
+## Instructions Limits
 - there is a limit on the number of micro-ops a cycle
 - 5 micro-ops cannot be adds
   - load tides up the execution port
 - Registers are next to the lanes
 
-# Cache control
+## Cache control
 - responsive, guesses
 - "hints"
   - prefetch instruction :: tries to get the memory in cache
@@ -380,13 +373,13 @@ Because there are many dependencies on loads it is very important.
 - only matters when you have data you *do* want to cache
 
 
-# Data going around cache
+## Data going around cache
 - bandwith is way bigger than the amount that needs to be passed through
 - bandwith becomes narrower
 - [cache_wideness][img/cache_wideness.png]
 - the place having the data decides the bandwith
 
-# Prefetches
+## Prefetches
 - hardware and software
 - hardware ::
   - looks at the pattern of pages
@@ -394,16 +387,16 @@ Because there are many dependencies on loads it is very important.
 - eliminates latency
 - throughput stays the same (cache bandwith)
 
-# Other programs
+## Other programs
 - processor does not care about *what* it caches
 - you lose depending on the core
 - programms waking up takes up cache
 - speed decrease is not in ^2 but size of bytes per cycle
 
-# Cache runtime
+## Cache runtime
 - The slower the routine, the less the cache is important
 
-# Cache lines
+## Cache lines
 - every 64 bytes
 - being memory aligned penalties :: (not very high)
   - 4096B (page boundaries)
@@ -413,17 +406,17 @@ Because there are many dependencies on loads it is very important.
 - best to use all the cache lines (all 64 bytes)
   - via data structures
 
-# Checking the cache
+## Checking the cache
 - checking and getting happens in one instruction
 
-# Cache fights
+## Cache fights
 - in multithreaded beware of shared caching
 - pulling in the cache can evict the current data
 
-# L1 cache supremacy
+## L1 cache supremacy
 - constrained by distance
 
-# Instructions in cache
+## Instructions in cache
 - Front end ::
   - ICache
 - Back end ::
@@ -432,11 +425,11 @@ Because there are many dependencies on loads it is very important.
 - Unpredicted instructions can slow down the program
 - In L2/L3 cache instructions take space.
 
-# Performance for different sizes
+## Performance for different sizes
 - smaller sizes are more likely to be cached
 - if the cache is *primed* then yes
 
-# Cache behaviour
+## Cache behaviour
 - branch predictor :: which way
   - sophisticated
 - hardware prefetcher :: which memory is going to be touched
@@ -444,15 +437,15 @@ Because there are many dependencies on loads it is very important.
   - not smart
 - "warmed up"
 
-# Persistent cache
+## Persistent cache
 - OS wipes out with new memory map
     
-# Ask for cache
+## Ask for cache
 - Evict train
   - evict, ask L2, evict, ask L3, evict ask memory, fill evicts
 - DMA (Direct Memory Acces)
 
-# Inclusive vs Exclusive Caches
+## Inclusive vs Exclusive Caches
 - exclusive cache ::
   - data is not in L2
   - only when evicted from L1
@@ -463,20 +456,20 @@ Because there are many dependencies on loads it is very important.
 # 10. [Multithreading](https://www.computerenhance.com/p/multithreading)
 *Increasing speed of instructions*
 
-# Multithreading
+## Multithreading
 - Core :: different computers
   - physical
 - Threads :: interface to access cores through the OS
   - OS
 
-# Speeding up
+## Speeding up
 - not x2 x4, actually account cache for speed up
 - more SIMD registers, instructions cache, ...
 - shared caches add up
 - memory bandwidth can be bottleneck
   - sometimes does not add up
 
-# Forcing out of memory
+## Forcing out of memory
 - bandwith does not increase a lot when using main memory
   - depending on the chip
 - L3 cache and main memory are shared (not big speed ups)
@@ -484,11 +477,11 @@ Because there are many dependencies on loads it is very important.
 # 11. [Python Revisited](https://www.computerenhance.com/p/python-revisited)
 Assembly is what determines the speed.
 
-# Python
+## Python
 - doing every sum in python is slow
 - numpy is faster when you have supplied the array with a type
 # 12. [Monday Q&A #3 (2023-02-20)](https://www.computerenhance.com/p/monday-q-and-a-3-2023-02-20)
-# Hyperthreading & Branch prediction
+## Hyperthreading & Branch prediction
 - hyperthreads ::
   - [[./img/hyperthreading.png][hyperthreading]]
   - polling for more than one instructions
@@ -508,26 +501,26 @@ Assembly is what determines the speed.
 - IPC: more execution ports filled
 
 
-# Multithreaded
+## Multithreaded
 - code so that threads do not talk to each other
   - communication is a mistake
 - sync the code
 
 
-# Max multiplier mulitthreading
+## Max multiplier mulitthreading
 - fetching memory is slower than computation
 - look at all-core-bandwith
   - total bandwith to all cores
   - divided by cores = max memory per cycle
     
 
-# Logical processors vs Cores
+## Logical processors vs Cores
 - Cores = computers
 - Logical processors
   - OS / threads / instruction streams
 
 
-# thread count > L1 cache
+## thread count > L1 cache
 - oversubscription ::
   - when the program asks for more threads than available
   - lot of eviction
@@ -537,11 +530,11 @@ Assembly is what determines the speed.
 - OS tries to run thread as long as possible
   
 
-# Green thread / fibers
+## Green thread / fibers
 - software control swapping of the OS
 
 
-# Multithreadeding with disks
+## Multithreadeding with disks
 - micromanagement
   - when CPU has to decrypt
 - depends on how disk works
@@ -549,7 +542,7 @@ Assembly is what determines the speed.
 - threads can make non blocking code
 
 
-# How to get memory bandwidth
+## How to get memory bandwidth
 - https://github.com/cmuratori/blandwidth
 
 # 13. [The Haversine Distance Problem](https://www.computerenhance.com/p/the-haversine-distance-problem)
@@ -565,20 +558,20 @@ Assembly is what determines the speed.
 The 8086 instruction set architecture is easier.
 - Better for understanding concepts.
 
-# Register
+## Register
 - place to store information
 - 16 bits on the 8086
 
-# Operations
+## Operations
 1. load memory
    - copy into register
 2. compute
 3. write to memory
    
-# Instruction Decode
+## Instruction Decode
 Turning the instruction stream into hardware operations.
 
-# Instructions
+## Instructions
 - mov ::
   - move, but actually a /copy/
 - are assembled into binary that the /Instruction Decoder/ can use to
@@ -641,7 +634,7 @@ Special case when MOD is 00 and R/M is 110 -> 16 bit displacement.
 
 Immediately (available) value.
 
-# Assignment
+## Assignment
 Also implement memory to register.
 - going to have to read the displacement bits (DISP)
 
