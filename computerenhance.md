@@ -766,6 +766,9 @@ A segfault is an interrupt from the interrupt table. Eg. paging in unmapped memo
 TODO: more information about 8086 misc.
 
 # 47. [Generating Haversine Input JSON](https://www.computerenhance.com/p/generating-haversine-input-json)
+Random points on a sphere will be more present at the extremities.  A lot of random makes it non-random.
+A better distribution will give a better average (e.g., clusters).
+
 # 48. [Monday Q&A #13 (2023-05-29)](https://www.computerenhance.com/p/monday-q-and-a-13-2023-05-29)
 # 49. [Writing a Simple Haversine Distance Processor](https://www.computerenhance.com/p/writing-a-simple-haversine-distance)
 # 50. [Monday Q&A #14 (2023-06-05)](https://www.computerenhance.com/p/monday-q-and-a-14-2023-06-05)
