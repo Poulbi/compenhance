@@ -28,7 +28,7 @@ FlagsToString(char *Buffer, u32 Flags)
     u32 Length = 0;
     
     for(s32 MappingIndex = 0;
-        MappingIndex < flags_8086_strings_count;
+        MappingIndex < flags_8086_stringsCount;
         MappingIndex++)
     {
         u8 Char = flags_8086_strings[MappingIndex][0];

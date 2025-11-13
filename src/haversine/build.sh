@@ -48,4 +48,8 @@ printf '[%s compile]\n' "$Compiler"
 
 mkdir -p ../../build
 
+printf '[metadata generation]\n'
+mkdir -p generated
+../../build/sim86_meta haversine.mdesk > generated/types.h
+
 $Compiler $Flags -o ../../build/haversine_generator haversine_generator.cpp
