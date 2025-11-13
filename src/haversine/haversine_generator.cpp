@@ -1,14 +1,18 @@
 //~ Libraries
 #include "libs/lr/lr.h"
+#define STB_SPRINTF_IMPLEMENTATION
+#include "libs/stb_sprintf.h"
+#include "libs/listing_065.cpp"
 
+//~ Standard library
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
 
+#include <fcntl.h>
+#include <unistd.h>
 #include <sys/mman.h>
-
-#include "listing_065.cpp"
 
 #include "haversine_random.h"
 
@@ -18,13 +22,12 @@
 
 //~ Constants
 #define ClusterCount 64
+// NOTE(luca): A double's mantissa is 52 bits.  2^52 - 1 is 4503599627370495 which has 
+// 16 digits.
+#define PointJsonFormat "{ \"x0\": %.15f, \"y0\": %.15f, \"x1\": %.15f, \"y1\": %.15f }\n"
 
 //~ Types
-enum generation_method : u32
-{
-    Method_Uniform,
-    Method_Cluster
-};
+#include "generated/types.h"
 
 struct cluster
 {
@@ -46,11 +49,15 @@ int main(int ArgsCount, char *Args[], char *Env[])
         u64 PairCount = 0;
         b32 Error = false;
         
-        if(!strcmp(Args[1], "uniform"))
+        char *MethodString = Args[1];
+        char *SeedString = Args[2];
+        char *PairCountString = Args[3];
+        
+        if(!strcmp(MethodString, "uniform"))
         {
             Method = Method_Uniform;
         }
-        else if(!strcmp(Args[1], "cluster"))
+        else if(!strcmp(MethodString, "cluster"))
         {
             Method = Method_Cluster;
         }
@@ -59,11 +66,11 @@ int main(int ArgsCount, char *Args[], char *Env[])
             Error = true;
         }
         
-        RandomSeed = atoll(Args[2]);
+        RandomSeed = atoll(SeedString);
         
         if(RandomSeed == 0)
         {
-            if(Args[2][0] == '0')
+            if(SeedString[0] == '0')
             {
                 RandomSeed = 0;
             }
@@ -73,7 +80,7 @@ int main(int ArgsCount, char *Args[], char *Env[])
             }
         }
         
-        PairCount = atoll(Args[3]);
+        PairCount = atoll(PairCountString);
         if(PairCount == 0)
         {
             Error = true;
@@ -84,10 +91,15 @@ int main(int ArgsCount, char *Args[], char *Env[])
             printf("Method: %s\n"
                    "Random seed: %lu\n"
                    "Pairs count: %lu\n"
-                   , Args[1], RandomSeed, PairCount);
+                   , MethodString, RandomSeed, PairCount);
             
-            umm MemorySize = Gigabytes(4);
-            u8 *Memory = (u8 *)mmap(0, MemorySize, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_SHARED|MAP_POPULATE, -1, 0);
+            umm JsonMemorySize = Gigabytes(4);
+            u8 *JsonMemory = (u8 *)mmap(0, JsonMemorySize, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_SHARED, -1, 0);
+            u8 *JsonOut = JsonMemory;
+            
+            umm BinMemorySize = Gigabytes(4);
+            u8 *BinMemory = (u8 *)mmap(0, BinMemorySize, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_SHARED, -1, 0);
+            u8 *BinOut = BinMemory;
             
             // Generate pairs in the following format.
             // 
@@ -100,7 +112,6 @@ int main(int ArgsCount, char *Args[], char *Env[])
             // }
             // 
             
-            FILE *Out = fopen("out.json", "wb");
             char *JsonHeader = 
                 "{\n"
                 " \"pairs\":\n"
@@ -109,13 +120,13 @@ int main(int ArgsCount, char *Args[], char *Env[])
                 "   ]\n"
                 "}\n";
             
-            fprintf(Out, "%s", JsonHeader);
+            JsonOut += stbsp_sprintf((char *)JsonOut, "%s", JsonHeader);
             
             pcg64_random_t RNG = {};
             pcg64_srandom_r(&RNG, RandomSeed, RandomSeed);
             
             if(0) {}
-            else if(Method_Uniform)
+            else if(Method == Method_Uniform)
             {
                 f64 AverageSum = 0;
                 f64 TotalSum = 0;
@@ -131,18 +142,19 @@ int main(int ArgsCount, char *Args[], char *Env[])
                     f64 Sum = ReferenceHaversine(X0, Y0, X1, Y1, 6372.8);
                     TotalSum += Sum;
                     
-                    // NOTE(luca): A double's mantissa is 52 bits.  2^52 - 1 is 4503599627370495 which has 
-                    // 16 digits.
-                    fprintf(Out, 
-                            "    { \"x0\": %.15f, \"y0\": %.15f, \"x1\": %.15f, \"y1\": %.15f }\n", 
-                            X0, Y0, X1, Y1);
+                    *(f64 *)BinOut = Sum;
+                    BinOut += sizeof(Sum);
                     
+                    JsonOut += stbsp_sprintf((char *)JsonOut, "    " PointJsonFormat, X0, Y0, X1, Y1);
                 }
                 AverageSum = TotalSum / (f64)PairCount;
                 
+                *(f64 *)BinOut = AverageSum;
+                BinOut += sizeof(AverageSum);
+                
                 printf("Average sum: %f\n", AverageSum);
             }
-            else if(Method_Cluster)
+            else if(Method == Method_Cluster)
             {
                 cluster Clusters[ClusterCount] = {};
                 for(u32 ClusterIndex = 0;
@@ -165,7 +177,6 @@ int main(int ArgsCount, char *Args[], char *Env[])
                 {
                     cluster *ClusterAt = Clusters + ClusterIndex;
                     
-                    
                     f64 X0 = RandomBetween(&RNG, ClusterAt->X - ClusterAt->Width, ClusterAt->X + ClusterAt->Width);
                     f64 Y0 = RandomBetween(&RNG, ClusterAt->Y - ClusterAt->Height, ClusterAt->Y + ClusterAt->Height);
                     f64 X1 = RandomBetween(&RNG, ClusterAt->X - ClusterAt->Width, ClusterAt->X + ClusterAt->Width);
@@ -174,11 +185,10 @@ int main(int ArgsCount, char *Args[], char *Env[])
                     f64 Sum = ReferenceHaversine(X0, Y0, X1, Y1, 6372.8);
                     TotalSum += Sum;
                     
-                    // NOTE(luca): A double's mantissa is 52 bits.  2^52 - 1 is 4503599627370495 which has 
-                    // 16 digits.
-                    fprintf(Out, 
-                            "    { \"x0\": %.15f, \"y0\": %.15f, \"x1\": %.15f, \"y1\": %.15f }\n", 
-                            X0, Y0, X1, Y1);
+                    *(f64 *)BinOut = Sum;
+                    BinOut += sizeof(Sum);
+                    
+                    JsonOut += stbsp_sprintf((char *)JsonOut, "    " PointJsonFormat, X0, Y0, X1, Y1);
                     
                     ClusterIndex += 1;
                     if(ClusterIndex == ClusterCount)
@@ -189,6 +199,9 @@ int main(int ArgsCount, char *Args[], char *Env[])
                 }
                 AverageSum = TotalSum / (f64)PairCount;
                 
+                *(f64 *)BinOut = AverageSum;
+                BinOut += sizeof(AverageSum);
+                
                 printf("Average sum: %f\n", AverageSum);
             }
             else
@@ -196,8 +209,28 @@ int main(int ArgsCount, char *Args[], char *Env[])
                 Assert(0);
             }
             
-            fprintf(Out, "%s", JsonFooter);
+            JsonOut += stbsp_sprintf((char *)JsonOut, "%s", JsonFooter);
             
+            // Write memory to json file
+            {            
+                char JsonFileName[256] = {};
+                stbsp_sprintf(JsonFileName, "data_%lu.json", PairCount);
+                
+                int File = open(JsonFileName, O_RDWR|O_CREAT|O_TRUNC, 0600);
+                Assert(File != -1);
+                smm Result = write(File, JsonMemory, JsonOut - JsonMemory);
+                Assert(Result == JsonOut - JsonMemory);
+            }
+            
+            // Write memory to binary answer file
+            char BinFileName[256] = {};
+            {
+                stbsp_sprintf(BinFileName, "data_%lu_haveranswer.f64", PairCount);
+                int File = open(BinFileName, O_RDWR|O_CREAT|O_TRUNC, 0600);
+                Assert(File != -1);
+                smm Result = write(File, BinMemory, BinOut - BinMemory);
+                Assert(Result == BinOut - BinMemory);
+            }
         }
         else
         {

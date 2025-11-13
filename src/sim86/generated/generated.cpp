@@ -11,7 +11,7 @@ enum flags_8086
  Flag_Trap = (1 << 8),
 };
 
-int flags_8086_strings_count = 9;
+int flags_8086_stringsCount = 9;
 char *flags_8086_strings[] =
 {
  "C",
@@ -27,5 +27,4 @@ char *flags_8086_strings[] =
 
 enum sim86_enum
 {
-Sim86_Count
 };

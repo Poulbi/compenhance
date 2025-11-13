@@ -59,8 +59,8 @@ int main(int ArgsCount, char *Args[])
             for(MD_EachNode(Node, Root))
             {
                 
-                // 1. If we find a table_gen_enum_flags tag
-                if(MD_NodeHasTag(Node, MD_S8Lit("table_gen_enum_flags"), 0))
+                // 1. If we find a table_gen_flags tag
+                if(MD_NodeHasTag(Node, MD_S8Lit("table_gen_flags"), 0))
                 {
                     MD_String8 TableName = MD_NodeAtIndex(Node->first_tag->first_child, 0)->string;
                     MD_String8 MemberName = MD_NodeAtIndex(Node->first_tag->first_child, 1)->string;
@@ -111,7 +111,7 @@ int main(int ArgsCount, char *Args[])
                     
                     int MemberCount = MD_ChildCountFromNode(Table);
                     
-                    MD_S8ListPushFmt(Arena, &Stream, "int %S_count = %d;\n", Node->string, MemberCount);
+                    MD_S8ListPushFmt(Arena, &Stream, "int %SCount = %d;\n", Node->string, MemberCount);
                     // Header
                     MD_S8ListPushFmt(Arena, &Stream, "%S%S[] =\n{\n", Type, Node->string);
                     
@@ -124,13 +124,41 @@ int main(int ArgsCount, char *Args[])
                     MD_S8ListPush(Arena, &Stream, MD_S8Lit("};\n\n"));
                 }
                 
-#if 0                
-                if(MD_NodeHasTag(Node, MD_S8Lit("table"), 0))
+                if(MD_NodeHasTag(Node, MD_S8Lit("table_gen_enum"), 0))
                 {
-                    Assert(0);
+                    MD_String8 TableName = MD_NodeAtIndex(Node->first_tag->first_child, 0)->string;
+                    MD_String8 Prefix = MD_NodeAtIndex(Node->first_tag->first_child, 1)->string;
+                    MD_String8 MemberName = MD_NodeAtIndex(Node->first_tag->first_child, 2)->string;
+                    
+                    MD_Node *Table = MD_FirstNodeWithString(Root, TableName, 0);
+                    
+                    MD_Node *TableTag = MD_TagFromString(Table, MD_S8Lit("table"), 0);
+                    MD_Node *MemberNode = MD_FirstNodeWithString(TableTag->first_child, MemberName, 0);
+                    int MemberIndex = MD_IndexFromNode(MemberNode);
+                    
+                    
+                    MD_S8ListPushFmt(Arena, &Stream, "enum %S\n{\n", Node->raw_string);
+                    
+                    for(MD_EachNode(Member, Table->first_child))
+                    {
+                        MD_Node *ValueNode  = MD_NodeAtIndex(Member->first_child, MemberIndex);
+                        if(Member != Table->first_child)
+                        {
+                            MD_S8ListPushFmt(Arena, &Stream, " %S%S,\n", Prefix, ValueNode->raw_string);
+                        }
+                        else
+                        {
+                            MD_S8ListPushFmt(Arena, &Stream, " %S%S = 0,\n", Prefix, ValueNode->raw_string);
+                        }
+                        
+                    }
+                    MD_S8ListPushFmt(Arena, &Stream, "};\n");
+                    
+                    
                 }
-#endif
                 
+                
+#if 0                
                 if(MD_NodeHasTag(Node, MD_S8Lit("table_gen_enum"), 0))
                 {
                     // Header
@@ -168,6 +196,8 @@ int main(int ArgsCount, char *Args[])
                     
                     MD_S8ListPush(Arena, &Stream, MD_S8Lit("};\n"));
                 }
+#endif
+                
                 
                 // MD_PrintDebugDumpFromNode(stderr, Node, MD_GenerateFlags_All);
             }

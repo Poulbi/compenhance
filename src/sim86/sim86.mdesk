@@ -11,7 +11,7 @@
  { Trap,           "T", }
 }
 
-@table_gen_enum_flags(sim86_flags_mapping, name) flags_8086
+@table_gen_flags(sim86_flags_mapping, name) flags_8086
 @table_gen_data(sim86_flags_mapping, `char *`, str) flags_8086_strings
 
 // TODO:
