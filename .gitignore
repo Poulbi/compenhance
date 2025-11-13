@@ -1,2 +1,4 @@
 *.json
 *.f64
+**/libs/lr
+build/*

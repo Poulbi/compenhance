@@ -34,7 +34,7 @@ RandomF64(pcg64_random_t *RNG)
 {
 	s32 Exponent = -64;
 	u64 Significand;
-	umm Shift;
+	s32 Shift;
     
 	/*
 	 * Read zeros into the exponent until we hit a one; the rest

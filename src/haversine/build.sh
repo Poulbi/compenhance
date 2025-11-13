@@ -18,7 +18,6 @@ ClangFlags="-fdiagnostics-absolute-paths -ftime-trace
 
 GCCFlags="-Wno-cast-function-type -Wno-missing-field-initializers -Wno-int-to-pointer-cast"
 
-
 #- Main
 
 clang=1
@@ -46,10 +45,11 @@ Flags="$Flags $LinkerFlags"
 [ "$release" = 1 ] && printf '[release mode]\n'
 printf '[%s compile]\n' "$Compiler"
 
-mkdir -p ../../build
-
-printf '[metadata generation]\n'
+Build="../../build"
+mkdir -p "$Build"
 mkdir -p generated
-../../build/sim86_meta haversine.mdesk > generated/types.h
 
-$Compiler $Flags -o ../../build/haversine_generator haversine_generator.cpp
+$Compiler $Flags -o "$Build"/meta ../meta/meta.c
+"$Build"/meta ./haversine.mdesk > ./generated/types.h
+
+$Compiler $Flags -o "$Build"/haversine_generator haversine_generator.cpp
