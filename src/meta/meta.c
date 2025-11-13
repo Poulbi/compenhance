@@ -1,29 +1,4 @@
-
-#if __clang__
-# define COMPILER_CLANG 1
-#elif _MSC_VER
-# define COMPILER_MSVC 1
-#elif __GNUC__
-# define COMPILER_GNU 1
-#endif
-
-#if defined(COMPILER_GNU)
-# define PUSH_WARNINGS \
-_Pragma("GCC diagnostic push") \
-_Pragma("GCC diagnostic ignored \"-Weverything\"")
-# define POP_WARNINGS \
-_Pragma("GCC diagnostic pop")
-#elif defined(COMPILER_CLANG)
-# define PUSH_WARNINGS \
-_Pragma("clang diagnostic push") \
-_Pragma("clang diagnostic ignored \"-Weverything\"")
-# define POP_WARNINGS \
-_Pragma("clang diagnostic pop")
-#else
-# define PUSH_WARNINGS \
-_Pragma("message \"No compatible compiler found\"")
-# define POP_WARNINGS
-#endif
+#include "lr/lr_macros.h"
 
 PUSH_WARNINGS
 #include "md.h"
@@ -109,7 +84,7 @@ int main(int ArgsCount, char *Args[])
                     MD_Node *MemberNode = MD_FirstNodeWithString(TableTag->first_child, MemberName, 0);
                     int MemberIndex = MD_IndexFromNode(MemberNode);
                     
-                    int MemberCount = MD_ChildCountFromNode(Table);
+                    MD_u64 MemberCount = MD_ChildCountFromNode(Table);
                     
                     MD_S8ListPushFmt(Arena, &Stream, "int %SCount = %d;\n", Node->string, MemberCount);
                     // Header

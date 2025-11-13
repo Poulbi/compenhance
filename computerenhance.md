@@ -770,7 +770,12 @@ Random points on a sphere will be more present at the extremities.  A lot of ran
 A better distribution will give a better average (e.g., clusters).
 
 # 48. [Monday Q&A #13 (2023-05-29)](https://www.computerenhance.com/p/monday-q-and-a-13-2023-05-29)
+Hashes are great for precise data, but floating point is imprecise so it would be hard.
+f16 are used to save bandwidth everywhere but also because of a lot of other things.
+
 # 49. [Writing a Simple Haversine Distance Processor](https://www.computerenhance.com/p/writing-a-simple-haversine-distance)
+No libraries json processor.
+
 # 50. [Monday Q&A #14 (2023-06-05)](https://www.computerenhance.com/p/monday-q-and-a-14-2023-06-05)
 # 51. [Initial Haversine Processor Code Review](https://www.computerenhance.com/p/initial-haversine-processor-code)
 # 52. [Monday Q&A #15 (2023-06-12)](https://www.computerenhance.com/p/monday-q-and-a-15-2023-06-12)

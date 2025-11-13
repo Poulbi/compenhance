@@ -1,9 +1,13 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "./libs/reference_decoder/sim86_lib.cpp"
-
 #include "sim86.h"
+#include "libs/lr/lr.h"
+
+PUSH_WARNINGS
+#include "./libs/reference_decoder/sim86_lib.cpp"
+POP_WARNINGS
+
 #include "clocks_table.inl"
 #include "generated/generated.cpp"
 
@@ -143,7 +147,7 @@ b32 IsMatchingOp(instruction_operand *Operand, instruction_clocks_operand_type T
 }
 
 internal void
-Run8086(psize MemorySize, u8 *Memory)
+Run8086(umm MemorySize, u8 *Memory)
 {
     s32 Registers[Register_count] = {}; 
     u32 FlagsRegister = 0;
@@ -153,7 +157,7 @@ Run8086(psize MemorySize, u8 *Memory)
     while(IPRegister < MemorySize)
     {
         instruction Decoded;
-        Sim86_Decode8086Instruction(MemorySize - IPRegister, Memory + IPRegister, &Decoded);
+        Sim86_Decode8086Instruction((u32)(MemorySize - IPRegister), Memory + IPRegister, &Decoded);
         if(Decoded.Op)
         {
             u32 OldIPRegister = IPRegister;
@@ -500,7 +504,7 @@ int main(int ArgsCount, char *Args[])
         FILE *File = fopen(FileName, "rb");
         if(File)
         {
-            psize BytesWritten = fread(GlobalMemory, 1, sizeof(GlobalMemory), File);
+            umm BytesWritten = fread(GlobalMemory, 1, sizeof(GlobalMemory), File);
             fclose(File);
             
             if(Execute)

@@ -1,42 +1,51 @@
 #!/bin/sh
 
-cd "$(dirname "$(readlink -f "$0")")"
+set -eu
+
+ScriptDirectory="$(dirname "$(readlink -f "$0")")"
+cd "$ScriptDirectory"
+
+#- Globals
+CommonCompilerFlags="-DOS_LINUX=1 -fsanitize-trap -nostdinc++"
+CommonWarningFlags="-Wall -Wextra -Wconversion -Wdouble-promotion -Wno-sign-conversion -Wno-sign-compare -Wno-double-promotion -Wno-unused-but-set-variable -Wno-unused-variable -Wno-write-strings -Wno-pointer-arith -Wno-unused-parameter -Wno-unused-function"
+LinkerFlags=""
+
+DebugFlags="-g -ggdb -g3"
+ReleaseFlags="-O3"
+
+ClangFlags="-fdiagnostics-absolute-paths -ftime-trace
+-Wno-null-dereference -Wno-missing-braces -Wno-vla-extension -Wno-writable-strings -Wno-missing-field-initializers -Wno-address-of-temporary -Wno-int-to-void-pointer-cast"
+
+GCCFlags="-Wno-cast-function-type -Wno-missing-field-initializers -Wno-int-to-pointer-cast"
+
+#- Main
+
+clang=1
+gcc=0
+debug=1
+release=0
+for Arg in "$@"; do eval "$Arg=1"; done
+# Exclusive flags
+[ "$release" = 1 ] && debug=0
+[ "$gcc"     = 1 ] && clang=0
+
+[ "$gcc"   = 1 ] && Compiler="g++"
+[ "$clang" = 1 ] && Compiler="clang"
+
+Flags="$CommonCompilerFlags"
+[ "$debug"   = 1 ] && Flags="$Flags $DebugFlags"
+[ "$release" = 1 ] && Flags="$Flags $ReleaseFlags"
+Flags="$Flags $CommonCompilerFlags"
+Flags="$Flags $CommonWarningFlags"
+[ "$clang" = 1 ] && Flags="$Flags $ClangFlags"
+[ "$gcc"   = 1 ] && Flags="$Flags $GCCFlags"
+Flags="$Flags $LinkerFlags"
+
+[ "$debug"   = 1 ] && printf '[debug mode]\n'
+[ "$release" = 1 ] && printf '[release mode]\n'
+printf '[%s compile]\n' "$Compiler"
 
 Build="../../build"
 mkdir -p "$Build"
-mkdir -p generated
 
-Compiler="clang"
-
-CompilerFlags="
--I./libs/metadesk
--g
--fdiagnostics-absolute-paths
--nostdinc++
--DSIM86_INTERNAL
-"
-
-WarningFlags="
--Wall
--Wextra
--Wno-unused-label
--Wno-unused-variable
--Wno-unused-function
--Wno-unused-value
--Wno-unused-but-set-variable
--Wno-missing-field-initializers
--Wno-write-strings
-"
-
-printf '[metadata generation]\n'
-$Compiler $CompilerFlags $WarningFlags \
- -o "$Build"/sim86_meta \
- sim86_meta.c
-"$Build"/sim86_meta ./sim86.mdesk > ./generated/generated.cpp
-
-printf '[debug mode]\n'
-printf '[%s build]\n' "$Compiler" 
-Source="sim86.cpp"
-$Compiler $CompilerFlags $WarningFlags \
- -o "$Build"/sim86 \
-  sim86.cpp
+$Compiler $Flags -o "$Build"/sim86 sim86.cpp
