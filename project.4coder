@@ -17,7 +17,7 @@ blacklist_patterns = {
 paths =
 {
     { .path = ".",     .recursive = false, .relative = true, },
-    { .path = "src/haversine",   .recursive = true , .relative = true, },
+    { .path = "src/haversine_processor",   .recursive = true , .relative = true, },
 };
 
 load_paths = {
