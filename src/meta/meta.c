@@ -1,4 +1,4 @@
-#include "lr/lr_macros.h"
+#include "../shared_libraries/lr/lr.h"
 
 PUSH_WARNINGS
 #include "md.h"

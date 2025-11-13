@@ -1,4 +1,4 @@
-#include "libs/lr/lr.h"
+#include "../shared_libraries/lr/lr.h"
 #define STB_SPRINTF_IMPLEMENTATION
 #include "libs/stb_sprintf.h"
 
@@ -64,12 +64,12 @@ void ConsumeWhiteSpacePastChar(umm Size, u8 *In, umm *Start, u8 Char)
     umm At = *Start;
     
     while(At < Size && IsWhiteSpace(In[At])) At += 1;
-    At += 1;
     
     if(At >= Size || In[At] != Char)
     {
         Assert(0 && "Expected Char");
     }
+    At += 1;
     
     *Start = At;
 }
@@ -127,29 +127,47 @@ struct parse_number_result
     umm At;
 };
 
-void ParseNumber(umm Size, u8 *In, umm *Start, f64 *Value)
+void ParseFloatNumber(umm Size, u8 *In, umm *Start, f64 *Value)
 {
     umm At = *Start;
     
-    while(At < Size && In[At] != '.') 
+    b32 Negative = false;
+    f64 Integer = 0;
+    
+    if(In[At] == '-')
     {
-        Assert(In[At] >= '0' && In[At] <= '9');
-        
+        At += 1;
+        Negative = true;
+    }
+    
+    while(At < Size && (In[At] >= '0' && In[At] <= '9')) 
+    {
+        Integer = 10*Integer + (In[At] - '0');
         At += 1;
     }
     Assert(In[At] == '.');
     At += 1;
     
-    while(At < Size && !IsWhiteSpace(In[At]))
+    *Value = Integer;
+    
+    f64 Divider = 10;
+    while(At < Size && (In[At] >= '0' && In[At] <= '9'))
     {
-        Assert(In[At] >= '0' && In[At] <= '9');
+        f64 Digit = (f64)(In[At] - '0');
+        
+        *Value += (Digit / Divider);
+        Divider *= 10;
         
         At += 1;
     }
     
+    if(Negative)
+    {
+        *Value = -*Value;
+    }
+    
     *Start = At;
 }
-
 
 //-
 
@@ -187,60 +205,59 @@ int main(int ArgsCount, char *Args[])
             u8 *JsonMemory = (u8 *)mmap(0, FileSize, PROT_READ, MAP_PRIVATE, JsonFile, 0);
             AssertErrnoNotEquals((smm)JsonMemory, (smm)MAP_FAILED);
             
-            f64 X0, X1, Y0, Y1;
+            f64 X0 = 0.0;
+            f64 X1 = 0.0;
+            f64 Y0 = 0.0;
+            f64 Y1 = 0.0;
             
             // Json Parsing
             u8 *In = JsonMemory;
-            for(umm At = 0;
-                At < FileSize;
-                At += 1)
-            {
+            
+            umm At = 0;
+            ConsumeWhiteSpacePastChar(FileSize, In, &At, '{');
+            ConsumePastJsonString(FileSize, In, &At, S8Lit("pairs"));
+            ConsumeWhiteSpacePastChar(FileSize, In, &At, ':');
+            ConsumeWhiteSpacePastChar(FileSize, In, &At, '[');
+            
+            b32 PairsRemaining = true;
+            // One pair
+            while(PairsRemaining && (At < FileSize))
+            {                
                 ConsumeWhiteSpacePastChar(FileSize, In, &At, '{');
-                ConsumePastJsonString(FileSize, In, &At, S8Lit("pairs"));
+                
+                ConsumePastJsonString(FileSize, In, &At, S8Lit("x0"));
                 ConsumeWhiteSpacePastChar(FileSize, In, &At, ':');
-                ConsumeWhiteSpacePastChar(FileSize, In, &At, '[');
+                while(At < FileSize && IsWhiteSpace(In[At])) At += 1;
+                ParseFloatNumber(FileSize, In, &At, &X0);
+                ConsumeWhiteSpacePastChar(FileSize, In, &At, ',');
                 
-                // One pair
-                {                
-                    ConsumeWhiteSpacePastChar(FileSize, In, &At, '{');
-                    
-                    ConsumePastJsonString(FileSize, In, &At, S8Lit("x0"));
-                    ConsumeWhiteSpacePastChar(FileSize, In, &At, ':');
-                    while(At < FileSize && IsWhiteSpace(In[At])) At += 1;
-                    At += 1;
-                    ParseNumber(FileSize, In, &At, &X0);
-                    ConsumeWhiteSpacePastChar(FileSize, In, &At, ',');
-                    
-                    ConsumePastJsonString(FileSize, In, &At, S8Lit("y0"));
-                    ConsumeWhiteSpacePastChar(FileSize, In, &At, ':');
-                    while(At < FileSize && IsWhiteSpace(In[At])) At += 1;
-                    At += 1;
-                    ParseNumber(FileSize, In, &At, &Y0);
-                    ConsumeWhiteSpacePastChar(FileSize, In, &At, ',');
-                    
-                    ConsumePastJsonString(FileSize, In, &At, S8Lit("x1"));
-                    ConsumeWhiteSpacePastChar(FileSize, In, &At, ':');
-                    while(At < FileSize && IsWhiteSpace(In[At])) At += 1;
-                    At += 1;
-                    ParseNumber(FileSize, In, &At, &X1);
-                    ConsumeWhiteSpacePastChar(FileSize, In, &At, ',');
-                    
-                    ConsumePastJsonString(FileSize, In, &At, S8Lit("y1"));
-                    ConsumeWhiteSpacePastChar(FileSize, In, &At, ':');
-                    while(At < FileSize && IsWhiteSpace(In[At])) At += 1;
-                    At += 1;
-                    ParseNumber(FileSize, In, &At, &Y1);
-                    
-                    ConsumeWhiteSpacePastChar(FileSize, In, &At, '}');
-                }
+                ConsumePastJsonString(FileSize, In, &At, S8Lit("y0"));
+                ConsumeWhiteSpacePastChar(FileSize, In, &At, ':');
+                while(At < FileSize && IsWhiteSpace(In[At])) At += 1;
+                ParseFloatNumber(FileSize, In, &At, &Y0);
+                ConsumeWhiteSpacePastChar(FileSize, In, &At, ',');
                 
-#if 1                
-                break;
-#endif
+                ConsumePastJsonString(FileSize, In, &At, S8Lit("x1"));
+                ConsumeWhiteSpacePastChar(FileSize, In, &At, ':');
+                while(At < FileSize && IsWhiteSpace(In[At])) At += 1;
+                ParseFloatNumber(FileSize, In, &At, &X1);
+                ConsumeWhiteSpacePastChar(FileSize, In, &At, ',');
                 
-                ConsumeWhiteSpacePastChar(FileSize, In, &At, ']');
+                ConsumePastJsonString(FileSize, In, &At, S8Lit("y1"));
+                ConsumeWhiteSpacePastChar(FileSize, In, &At, ':');
+                while(At < FileSize && IsWhiteSpace(In[At])) At += 1;
+                ParseFloatNumber(FileSize, In, &At, &Y1);
+                
+                LogFormat("X0: %.15f, Y0: %.15f, X1: %.15f, Y1: %.15f\n", X0, Y0, X1, Y1);
+                
                 ConsumeWhiteSpacePastChar(FileSize, In, &At, '}');
+                
+                while(At < FileSize && IsWhiteSpace(In[At])) At += 1;
+                PairsRemaining = (In[At] == '{' || At >= FileSize);
             }
+            
+            ConsumeWhiteSpacePastChar(FileSize, In, &At, ']');
+            ConsumeWhiteSpacePastChar(FileSize, In, &At, '}');
             
         }
         

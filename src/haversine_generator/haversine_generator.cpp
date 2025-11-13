@@ -1,5 +1,5 @@
 //~ Libraries
-#include "libs/lr/lr.h"
+#include "../shared_libraries/lr/lr.h"
 PUSH_WARNINGS
 #define STB_SPRINTF_IMPLEMENTATION
 #include "libs/stb_sprintf.h"
