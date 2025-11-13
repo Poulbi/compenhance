@@ -1,1 +1,0 @@
-/home/aluc/proj/lr/lr.h
