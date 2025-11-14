@@ -5,10 +5,12 @@ POP_WARNINGS
 
 #define CountLeadingZeroes64(Value)	__builtin_clzll(Value)
 
+typedef pcg64_random_t random_series;
+
 u64 
-RandomU64(pcg64_random_t *RNG)
+RandomU64(random_series *Series)
 {
-    u64 Result = pcg64_random_r(RNG);
+    u64 Result = pcg64_random_r(Series);
     return Result;
 }
 
@@ -30,7 +32,7 @@ RandomU64(pcg64_random_t *RNG)
  * number in [0, 1], 0.00001010011111010100...; then round it.
  */
 f64
-RandomF64(pcg64_random_t *RNG)
+RandomF64(random_series *Series)
 {
 	s32 Exponent = -64;
 	u64 Significand;
@@ -40,7 +42,7 @@ RandomF64(pcg64_random_t *RNG)
 	 * Read zeros into the exponent until we hit a one; the rest
 	 * will go into the significand.
 	 */
-	while((Significand = RandomU64(RNG)) == 0) 
+	while((Significand = RandomU64(Series)) == 0) 
     {
 		Exponent -= 64;
 		/*
@@ -66,7 +68,7 @@ RandomF64(pcg64_random_t *RNG)
 	if (Shift != 0) {
 		Exponent -= Shift;
 		Significand <<= Shift;
-		Significand |= (RandomU64(RNG) >> (64 - Shift));
+		Significand |= (RandomU64(Series) >> (64 - Shift));
 	}
     
 	/*
@@ -86,22 +88,41 @@ RandomF64(pcg64_random_t *RNG)
 }
 
 f64
-RandomUnilateral(pcg64_random_t *RNG)
+RandomUnilateral(random_series *Series)
 {
-    return RandomF64(RNG);
+    return RandomF64(Series);
 }
 
 f64
-RandomBilateral(pcg64_random_t *RNG)
+RandomBilateral(random_series *Series)
 {
-    f64 Result = 2.0*RandomUnilateral(RNG) - 1.0;
+    f64 Result = 2.0*RandomUnilateral(Series) - 1.0;
     return Result;
 }
 
 f64
-RandomBetween(pcg64_random_t *RNG, f64 Min, f64 Max)
+RandomBetween(random_series *Series, f64 Min, f64 Max)
 {
     f64 Range = Max - Min;
-    f64 Result = Min + RandomUnilateral(RNG)*Range;
+    f64 Result = Min + RandomUnilateral(Series)*Range;
+    return Result;
+}
+
+
+static f64 RandomDegree(random_series *Series, f64 Center, f64 Radius, f64 MaxAllowed)
+{
+    f64 MinVal = Center - Radius;
+    if(MinVal < -MaxAllowed)
+    {
+        MinVal = -MaxAllowed;
+    }
+    
+    f64 MaxVal = Center + Radius;
+    if(MaxVal > MaxAllowed)
+    {
+        MaxVal = MaxAllowed;
+    }
+    
+    f64 Result = RandomBetween(Series, MinVal, MaxVal);
     return Result;
 }
