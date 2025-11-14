@@ -777,8 +777,43 @@ f16 are used to save bandwidth everywhere but also because of a lot of other thi
 No libraries json processor.
 
 # 50. [Monday Q&A #14 (2023-06-05)](https://www.computerenhance.com/p/monday-q-and-a-14-2023-06-05)
+Reading a file completely into memory is not the most efficient.
+You don't need to be completely bit-accurate for the exercise.
+To use a text format for floating point you need very precise serialize-deserialize code (e.g., serialize-deserialize pairs).
+For precision you should not need precision.
+You can serialize into hex digits to have precise binary numbers.
+
 # 51. [Initial Haversine Processor Code Review](https://www.computerenhance.com/p/initial-haversine-processor-code)
+Generator
+- JSF RNG
+x You know pair count beforehand so you can use a coefficient
+x Set uniform as default method
+x MaxPairCount to avoid generating infinite pairs
+x MaxAllowed(X/Y) values (random degree function)
+x Collapsed both uniform and cluster codepaths by creating one cluster when uniform is selected
+x No clusters array, just regenerate the 4 values for each cluster
+
+Processor
+- simple loop that mimics generator and returns the sum
+- haversine_pair type
+- minimum amount of json per pair -> you can get the max number of pairs from json file size
+
+Cleanup times can be adressed.
+Clearing data that holds pointers can catch use-after-free.
+
 # 52. [Monday Q&A #15 (2023-06-12)](https://www.computerenhance.com/p/monday-q-and-a-15-2023-06-12)
+Missing fields becoming 0s.
+
+Aligment
+- Old processor would require memory alignment for some instructions
+- Nowadays unaligned loads have mostly no penalties
+- The unit of operation for CPUs is a cache line i.e., 64 aligned bytes.
+  - This means if your data is unaligned you might end up using more cache lines than needed
+  - In a multicore setup threads will communicate via cache lines and their might be contension and threads
+    might be writing to the same cache lines.
+
+cpuid will put information into registers so you can query the capabilities
+
 # 53. [Introduction to RDTSC](https://www.computerenhance.com/p/introduction-to-rdtsc)
 # 54. [Monday Q&A #16 (2023-06-19)](https://www.computerenhance.com/p/monday-q-and-a-16-2023-06-19)
 # 55. [How does QueryPerformanceCounter measure time?](https://www.computerenhance.com/p/how-does-queryperformancecounter)
