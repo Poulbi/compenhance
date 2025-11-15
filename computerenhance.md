@@ -815,6 +815,23 @@ Aligment
 cpuid will put information into registers so you can query the capabilities
 
 # 53. [Introduction to RDTSC](https://www.computerenhance.com/p/introduction-to-rdtsc)
+Timestamps are often aggregated (e.g., os program startup time).
+Pre-Pentium processor would not track timer information.
+
+Timestamp Counter has the count since the processor reset/boot.
+You can write to it.
+
+You might have to time rdtsc as well.
+By repeating you can reduce overhead.
+
+Cores can be turned off (e.g., power saving) and their frequencies are variable (e.g., turbo).
+RDTSC became a wall clock. You need extra work to count cycles.
+Other instructions for counting cycles do not exist everywhere or require privileged os access.
+Reading the frequency is impossible on AMD.
+
+There's no way to know directly what the timestamp counter frequency is.
+You can infer it by dividing an os time period by rdtsc time period.
+
 # 54. [Monday Q&A #16 (2023-06-19)](https://www.computerenhance.com/p/monday-q-and-a-16-2023-06-19)
 # 55. [How does QueryPerformanceCounter measure time?](https://www.computerenhance.com/p/how-does-queryperformancecounter)
 # 56. [Monday Q&A #17 (2023-06-26)](https://www.computerenhance.com/p/monday-q-and-a-17-2023-06-26)
