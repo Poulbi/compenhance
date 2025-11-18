@@ -7,6 +7,11 @@ POP_WARNINGS
 
 typedef pcg64_random_t random_series;
 
+void Seed(random_series *Series, u64 RandomSeed)
+{
+    pcg64_srandom_r(Series, RandomSeed, RandomSeed);
+}
+
 u64 
 RandomU64(random_series *Series)
 {

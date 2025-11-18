@@ -1,0 +1,14 @@
+// raddbg 0.9.24 project file
+
+recent_file: path: "src/haversine_processor/haversine_processor.cpp"
+target:
+{
+  executable: "build/haversine_processor.exe"
+  working_directory: "build/"
+  enabled: 1
+}
+debug_info:
+{
+  path: "C:/Users/zebra/Projects/compenhance/build/haversine_processor.pdb"
+  timestamp: 66198763822554
+}
