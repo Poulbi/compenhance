@@ -1,5 +1,5 @@
 //~ Libraries
-#include "../shared_libraries/lr/lr.h"
+#include "../lib/lr/lr.h"
 PUSH_WARNINGS
 #define STB_SPRINTF_IMPLEMENTATION
 #include "libs/stb_sprintf.h"
@@ -12,9 +12,17 @@ POP_WARNINGS
 #include <string.h>
 #include <inttypes.h>
 
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/mman.h>
+#if OS_LINUX
+# include <fcntl.h>
+# include <unistd.h>
+# include <sys/mman.h>
+#endif
+
+#if OS_WINDOWS
+# include <Windows.h>
+# define _CRT_SECURE_NO_WARNINGS 1
+# define WIN32_LEAN_AND_MEAN 1
+#endif
 
 #include "haversine_random.h"
 
@@ -29,8 +37,9 @@ POP_WARNINGS
 void WriteMemoryTofile(umm Size, void *Memory, umm PairCount, char *Name, char *Extension)
 {
     char FileName[256] = {};
-    stbsp_sprintf(FileName, "data_%lu_%s.%s", PairCount, Name, Extension);
+    stbsp_sprintf(FileName, "data_%llu_%s.%s", PairCount, Name, Extension);
     
+#if OS_LINUX
     int File = open(FileName, O_RDWR|O_CREAT|O_TRUNC, 0600);
     if(File != -1)
     {
@@ -39,9 +48,47 @@ void WriteMemoryTofile(umm Size, void *Memory, umm PairCount, char *Name, char *
     }
     else
     {
-        
+        // TODO(luca): Logging
     }
+    
+#elif OS_WINDOWS
+    HANDLE FileHandle = CreateFileA(FileName, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, 0, 0);
+    if(FileHandle != INVALID_HANDLE_VALUE)
+    {
+        DWORD BytesWritten;
+        if(WriteFile(FileHandle, Memory, (DWORD)Size, &BytesWritten, 0))
+        {
+            // NOTE(casey): File written successfully
+            Assert(BytesWritten == Size);
+        }
+        else
+        {
+            // TODO(casey): Logging
+        }
+        
+        CloseHandle(FileHandle);
+    }
+    else
+    {
+        // TODO(casey): Logging
+    }
+#endif
 }
+
+internal void *
+PlatformGetMemory(umm Size)
+{
+    void *Result = 0;
+    
+#if OS_LINUX
+    Result = mmap(0, Size, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_SHARED, -1, 0);
+#elif OS_WINDOWS
+    Result = VirtualAlloc(0, Size, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
+#endif
+    
+    return Result;
+}
+
 
 //~ Main
 int main(int ArgsCount, char *Args[], char *Env[])
@@ -83,11 +130,11 @@ int main(int ArgsCount, char *Args[], char *Env[])
         if(PairCount < MaxPairCount)
         {
             umm JsonMemorySize = Gigabytes(4);
-            u8 *JsonMemory = (u8 *)mmap(0, JsonMemorySize, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_SHARED, -1, 0);
+            u8 *JsonMemory = (u8 *)PlatformGetMemory(JsonMemorySize);
             u8 *JsonOut = JsonMemory;
             
             umm BinMemorySize = Gigabytes(4);
-            u8 *BinMemory = (u8 *)mmap(0, BinMemorySize, PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_SHARED, -1, 0);
+            u8 *BinMemory = (u8 *)PlatformGetMemory(BinMemorySize);;
             u8 *BinOut = BinMemory;
             
             JsonOut += stbsp_sprintf((char *)JsonOut, 
@@ -95,8 +142,8 @@ int main(int ArgsCount, char *Args[], char *Env[])
                                      " \"pairs\":\n"
                                      "  [\n");
             
-            pcg64_random_t Series = {};
-            pcg64_srandom_r(&Series, RandomSeed, RandomSeed);
+            random_series Series = {};
+            Seed(&Series, RandomSeed);
             
             u64 ClusterCountMax = 1 + (PairCount / 64);
             
@@ -139,8 +186,8 @@ int main(int ArgsCount, char *Args[], char *Env[])
             BinOut += sizeof(Sum);
             
             printf("Method: %s\n"
-                   "Random seed: %lu\n"
-                   "Pairs count: %lu\n"
+                   "Random seed: %llu\n"
+                   "Pairs count: %llu\n"
                    , MethodName, RandomSeed, PairCount);
             printf("Average sum: %.16f\n", Sum);
             
@@ -152,7 +199,7 @@ int main(int ArgsCount, char *Args[], char *Env[])
         }
         else
         {
-            printf("Massive files unsupported. Number of pairs must be less than %lu.\n", MaxPairCount);
+            printf("Massive files unsupported. Number of pairs must be less than %llu.\n", MaxPairCount);
         }
     }
     else
