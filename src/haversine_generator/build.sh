@@ -7,7 +7,7 @@ cd "$ScriptDirectory"
 
 #- Globals
 CommonCompilerFlags="-DOS_LINUX=1 -fsanitize-trap -nostdinc++"
-CommonWarningFlags="-Wall -Wextra -Wconversion -Wdouble-promotion -Wno-sign-conversion -Wno-sign-compare -Wno-double-promotion -Wno-unused-but-set-variable -Wno-unused-variable -Wno-write-strings -Wno-pointer-arith -Wno-unused-parameter -Wno-unused-function"
+CommonWarningFlags="-Wall -Wextra -Wconversion -Wdouble-promotion -Wno-sign-conversion -Wno-sign-compare -Wno-double-promotion -Wno-unused-but-set-variable -Wno-unused-variable -Wno-write-strings -Wno-pointer-arith -Wno-unused-parameter -Wno-unused-function -Wno-format"
 LinkerFlags="-lm"
 
 DebugFlags="-g -ggdb -g3"
