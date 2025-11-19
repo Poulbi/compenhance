@@ -833,6 +833,20 @@ There's no way to know directly what the timestamp counter frequency is.
 You can infer it by dividing an os time period by rdtsc time period.
 
 # 54. [Monday Q&A #16 (2023-06-19)](https://www.computerenhance.com/p/monday-q-and-a-16-2023-06-19)
+The frequency of rdtsc is constant for the CPU. = *invariant TSC*
+You can query this with `cpuid`.
+
+If your program is running on different CPUs (e.g., vm). 
+Offsets have to be correct and seed.
+
+The processor needs to be able to tell that you are doing a lot of work. To get that boost.
+RDTSCP respects the OOO (out-of-order) window.
+
+Understand what things do so you can be minimally instrusive.
+RDTSC does not work reliably on zen cores, there are other instructions. And is not good for nitty gritty optimizations.
+
+The chance of getting pre-empted is small when taking casual timings. (e.g., single core).  The OS provides more information about this as well.
+
 # 55. [How does QueryPerformanceCounter measure time?](https://www.computerenhance.com/p/how-does-queryperformancecounter)
 # 56. [Monday Q&A #17 (2023-06-26)](https://www.computerenhance.com/p/monday-q-and-a-17-2023-06-26)
 # 57. [Instrumentation-Based Profiling](https://www.computerenhance.com/p/instrumentation-based-profiling)
