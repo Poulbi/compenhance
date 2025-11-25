@@ -1,14 +1,21 @@
 // raddbg 0.9.24 project file
 
+recent_file: path: "src/haversine_processor/libs/listing_0070_platform_metrics.cpp"
 recent_file: path: "src/haversine_processor/haversine_processor.cpp"
+recent_file: path: "D:/a/_work/1/s/src/vctools/crt/vcstartup/src/startup/exe_common.inl"
 target:
 {
   executable: "build/haversine_processor.exe"
-  working_directory: "build/"
+  working_directory: build
   enabled: 1
 }
 debug_info:
 {
   path: "C:/Users/zebra/Projects/compenhance/build/haversine_processor.pdb"
-  timestamp: 66198763822554
+  timestamp: 66198770028214
+}
+breakpoint:
+{
+  address_location: 0x7ffee97d01c4
+  hit_count: 1
 }

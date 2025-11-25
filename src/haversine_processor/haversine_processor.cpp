@@ -29,6 +29,13 @@ global_variable u8 LogBuffer[Kilobytes(64)];
 
 //~ Functions
 
+static void PrintTimeElapsed(char const *Label, u64 TotalTSCElapsed, u64 Begin, u64 End)
+{
+    u64 Elapsed = End - Begin;
+    f64 Percent = 100.0 * ((f64)Elapsed / (f64)TotalTSCElapsed);
+    printf("  %s: %llu (%.2f%%)\n", Label, Elapsed, Percent);
+}
+
 u64 GuessCPUFreq(u64 OSElapsed, u64 CPUElapsed, u64 OSFreq)
 {
     u64 CPUFreq = 0;
@@ -104,88 +111,7 @@ void AssertErrnoEquals(smm Result, smm ErrorValue)
     }
 }
 
-void LogFormat(char *Format, ...)
-{
-    va_list Args;
-    va_start(Args, Format);
-    
-#if OS_LINUX    
-    int Length = stbsp_vsprintf((char *)LogBuffer, Format, Args);
-    smm BytesWritten = write(STDOUT_FILENO, LogBuffer, Length);
-    AssertErrnoEquals(BytesWritten, Length);
-#elif OS_WINDOWS
-    vprintf(Format, Args);
-#endif
-}
-
-#if OS_LINUX
-str8 ReadEntireFileIntoMemory(char *FileName)
-{
-    str8 Result = {};
-    
-    int File = open(FileName, O_RDONLY);
-    
-    struct stat StatBuffer = {};
-    int Error = fstat(File, &StatBuffer);
-    AssertErrnoNotEquals(Error, -1);
-    
-    Result.Size = StatBuffer.st_size;
-    Result.Data = (u8 *)mmap(0, Result.Size, PROT_READ, MAP_PRIVATE, File, 0);
-    AssertErrnoNotEquals((smm)Result.Data, (smm)MAP_FAILED);
-    
-    return Result;
-}
-
-#elif OS_WINDOWS
-
-str8 ReadEntireFileIntoMemory(char *FileName)
-{
-    str8 Result = {};
-    
-    HANDLE FileHandle = CreateFileA(FileName, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
-    if(FileHandle != INVALID_HANDLE_VALUE)
-    {
-        LARGE_INTEGER FileSize;
-        if(GetFileSizeEx(FileHandle, &FileSize))
-        {
-            u32 FileSize32 = (u32)(FileSize.QuadPart);
-            Result.Data = (u8 *)VirtualAlloc(0, FileSize32, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
-            if(Result.Data)
-            {
-                DWORD BytesRead;
-                if(ReadFile(FileHandle, Result.Data, FileSize32, &BytesRead, 0) &&
-                   (FileSize32 == BytesRead))
-                {
-                    // NOTE(casey): File read successfully
-                    Result.Size = FileSize32;
-                }
-                else
-                {                    
-                    // TODO(casey): Logging
-                    
-                    if(Result.Data)
-                    {
-                        VirtualFree(Result.Data, 0, MEM_RELEASE);
-                    }
-                    
-                    Result.Data = 0;
-                }
-            }
-            else
-            {
-                // TODO(casey): Logging
-            }
-        }
-        else
-        {
-            // TODO(casey): Logging
-        }
-    }
-    
-    return Result;
-}
-
-#endif // OS_LINUX
+#include "os.c"
 
 //- Parsing utilities 
 
@@ -334,14 +260,18 @@ int main(int ArgsCount, char *Args[])
     u64 OSStart = ReadOSTimer();
     u64 CPUStart = ReadCPUTimer();
     
-    u64 StartupCPUElapsed = 0;
-    u64 ReadCPUElapsed = 0;
-    u64 ParseCPUElapsed = 0;
-    u64 SumCPUElapsed = 0;
-    u64 MiscOutputCPUElapsed = 0;
-    u64 MiscSetupCPUElapsed = 0;
+    u64 Prof_Begin = 0;
+    u64 Prof_End = 0;
+    u64 Prof_Startup = 0;
+    u64 Prof_Read = 0;
+    u64 Prof_MiscSetup= 0;
+    u64 Prof_Parse = 0;
+    u64 Prof_Sum = 0;
+    u64 Prof_MiscOutput= 0;
     
-    StartupCPUElapsed = CPUElapsedSince(CPUStart);
+    Prof_Begin = ReadCPUTimer();
+    
+    Prof_Read = ReadCPUTimer();
     
     if(ArgsCount >= 2)
     {
@@ -357,7 +287,7 @@ int main(int ArgsCount, char *Args[])
         Answers = ReadEntireFileIntoMemory(Args[2]);
     }
     
-    ReadCPUElapsed = CPUElapsedSince(CPUStart + StartupCPUElapsed);
+    Prof_MiscSetup = ReadCPUTimer();
     
     if(Json.Size)
     {
@@ -379,9 +309,8 @@ int main(int ArgsCount, char *Args[])
         umm PairCount = 0;
         b32 PairsRemaining = true;
         
-        MiscSetupCPUElapsed = CPUElapsedSince(CPUStart + StartupCPUElapsed + ReadCPUElapsed);
+        Prof_Parse = ReadCPUTimer();
         
-        u64 ParseStart = ReadCPUTimer();
         // One pair
         while(PairsRemaining && (At < Json.Size))
         {                
@@ -391,14 +320,9 @@ int main(int ArgsCount, char *Args[])
             ConsumeHaversineJsonNumber(Json.Size, In, &At, S8Lit("y0"), &Y0, true);
             ConsumeHaversineJsonNumber(Json.Size, In, &At, S8Lit("x1"), &X1, true);
             ConsumeHaversineJsonNumber(Json.Size, In, &At, S8Lit("y1"), &Y1, false);
-            u64 ParseEnd = ReadCPUTimer();
-            ParseCPUElapsed += (ParseEnd - ParseStart);
             
             f64 Sum = ReferenceHaversine(X0, Y0, X1, Y1, 6372.8);
             TotalSum += Sum;
-            SumCPUElapsed += CPUElapsedSince(ParseEnd);
-            
-            ParseStart = ReadCPUTimer();
             
             ConsumeWhiteSpacePastChar(Json.Size, In, &At, '}');
             
@@ -419,18 +343,17 @@ int main(int ArgsCount, char *Args[])
             PairsRemaining = (In[At] == '{' || At >= Json.Size);
             
             PairCount += 1;
-            
-            ParseEnd = ReadCPUTimer();
-            ParseCPUElapsed += (ParseEnd - ParseStart);
-            ParseStart = ParseEnd;
         }
         
         ConsumeWhiteSpacePastChar(Json.Size, In, &At, ']');
         ConsumeWhiteSpacePastChar(Json.Size, In, &At, '}');
-        ParseCPUElapsed += CPUElapsedSince(ParseStart);
+        
+        Prof_Sum = ReadCPUTimer();
         
         u64 MiscOutputStart = ReadCPUTimer();
         f64 AverageSum = TotalSum / (f64)PairCount;
+        
+        Prof_MiscOutput = ReadCPUTimer();
         LogFormat("Input size: %lu\n"
                   "Pair count: %lu\n"
                   "Haversine sum: %.16f\n"
@@ -451,7 +374,6 @@ int main(int ArgsCount, char *Args[])
             
         }
         
-        MiscOutputCPUElapsed = CPUElapsedSince(MiscOutputStart);
     }
     else
     {
@@ -459,24 +381,22 @@ int main(int ArgsCount, char *Args[])
                   "usage: %s <file.json> [answer.f64]\n", Args[0]);
     }
     
-    u64 OSEnd = ReadOSTimer();
-    u64 OSElapsed = OSEnd - OSStart;
-    u64 CPUElapsed = CPUElapsedSince(CPUStart);
+    Prof_End = ReadCPUTimer();
     
+    u64 OSElapsed = ReadOSTimer() - OSStart;
+    u64 CPUElapsed = CPUElapsedSince(Prof_Begin);
     u64 CPUFreq = GuessCPUFreq(OSElapsed, CPUElapsed, OSFreq);
     
     printf("\n");
     printf("Elapsed: %llu\n", CPUElapsed);
     printf("Total time: %.4fms (CPU freq %llu)\n", (f64)OSElapsed/(f64)OSFreq, CPUFreq);
-    if(CPUElapsed)
-    {
-        printf("  Startup: %llu (%.2f%%)\n", StartupCPUElapsed, (f64)StartupCPUElapsed/(f64)CPUElapsed*100);
-        printf("  Read: %llu (%.2f%%)\n", ReadCPUElapsed, (f64)ReadCPUElapsed/(f64)CPUElapsed*100);
-        printf("  MiscSetup: %llu (%.2f%%)\n", MiscSetupCPUElapsed, (f64)MiscSetupCPUElapsed/(f64)CPUElapsed*100);
-        printf("  Parse: %llu (%.2f%%)\n", ParseCPUElapsed, (f64)ParseCPUElapsed/(f64)CPUElapsed*100);
-        printf("  Sum: %llu (%.2f%%)\n", SumCPUElapsed, (f64)SumCPUElapsed/(f64)CPUElapsed*100);
-        printf("  MiscOutput: %llu (%.2f%%)\n", MiscOutputCPUElapsed, (f64)MiscOutputCPUElapsed/(f64)CPUElapsed*100);
-    }
+    
+    PrintTimeElapsed("Startup", CPUElapsed, Prof_Begin, Prof_Read);
+    PrintTimeElapsed("Read", CPUElapsed, Prof_Read, Prof_MiscSetup);
+    PrintTimeElapsed("MiscSetup", CPUElapsed, Prof_MiscSetup, Prof_Parse);
+    PrintTimeElapsed("Parse", CPUElapsed, Prof_Parse, Prof_Sum);
+    PrintTimeElapsed("Sum", CPUElapsed, Prof_Sum, Prof_MiscOutput);
+    PrintTimeElapsed("MiscOutput", CPUElapsed, Prof_MiscOutput, Prof_End);
     
     return 0;
 }

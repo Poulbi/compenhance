@@ -49,9 +49,9 @@ In the case of python the interpreter code is the waste.
 Key points:
 - recognize waste
 - in python: find ways to offload to code with less waste (e.g. C,
-  numpy, ...)
+                                                           numpy, ...)
 - to measure overhead + loop we can measure cycles
-  - more instructions != more time
+- more instructions != more time
 
 Python had 180x instructions and was 130x slower.
 
@@ -60,15 +60,15 @@ Python had 180x instructions and was 130x slower.
 
 ## IPC/ILP
 - **Instructions Per Clock**
-  - instructions per clock cycle
-  - specific to one instruction
+- instructions per clock cycle
+- specific to one instruction
 - **Instruction Level Parallelism**
-  - accounting all instructions
+- accounting all instructions
 ```c
-  for (i = 0; i < count; i +=1)
-  {
-   sum += input[i];
-  }
+for (i = 0; i < count; i +=1)
+{
+    sum += input[i];
+}
 ```
 - more instructions than only "adds"
 - no way to get to 1x add per cycle
@@ -77,11 +77,11 @@ Python had 180x instructions and was 130x slower.
 Reducing ratio of loop overhead / work
 - example: loop unrolling
 ```c
-    for (i = 0; i < count; i +=2)
-    {
-     sum += input[i];
-     sum += input[i + 1];
-    }
+for (i = 0; i < count; i +=2)
+{
+    sum += input[i];
+    sum += input[i + 1];
+}
 ```
 Weird that it would go until to 1x add per cycle.
 - what are the chances? overhead??
@@ -91,8 +91,8 @@ Multiple instructions can be executed at the same time.
 - CPU recognizes their *independency*, (e.g. different locations)
 - = parallelism
 - "If the destination is the same as the input it cannot be executed at
-  the same time."
-  - = serial dependency chain
+the same time."
+- = serial dependency chain
 
 Multiple chains can help break through limits.
 - "boosting the IPL"
@@ -104,8 +104,8 @@ does not do a lot of computation will bring less benefits.
 ## JIT
 - compile code "upfront"
 - have extra information
-  - knows context in which it is compiled
-  - can branch off functions
+- knows context in which it is compiled
+- can branch off functions
 - Javascript uses it by default
 
 Waste:
@@ -135,7 +135,7 @@ The reality is that there already is a well grown userbase.
 
 ## Unrolling
 - most compilers can unroll the loop for you
-  - clang can screw this up
+- clang can screw this up
 
 
 ## Why *minimum* adds per cycle
@@ -175,9 +175,9 @@ input += 4
 ## PADDD
 - Packed ADD D-word
 - "Wide" instruction
-  - can use multiple accumulators
+- can use multiple accumulators
 - Saves work
-  - e.g. extracting dependency chains
+- e.g. extracting dependency chains
 - ![vector example](img/vector_paddd.png)
 
 ## Subsets
@@ -208,13 +208,13 @@ Every add is dependent on the load
 
 Because there are many dependencies on loads it is very important.
 - *Cache*!
-  - Way faster than main memory (DIMMs)
+- Way faster than main memory (DIMMs)
 
 ## Cache
 - Register file :
-  - produce values really quickly and feed them to registers
-  - maximum speed
-  - few hundred values at most
+- produce values really quickly and feed them to registers
+- maximum speed
+- few hundred values at most
 
 # 9. [Monday Q&A #2 (2023-02-12)](https://www.computerenhance.com/p/monday-q-and-a-2-2023-02-12)
 ## Why would the register renamer not solve the dependencies?
@@ -227,22 +227,22 @@ Because there are many dependencies on loads it is very important.
 
 ## Hardware jungle
 - Coding towards the minimum specification
-  - generally true
+- generally true
 - Design hotspots for platforms (e.g. Xbox, PS5, ...)
 - vectorizable, enough in loop for IPC
-  - focus on things that work on all CPUs
+- focus on things that work on all CPUs
 
 ## More complicated loops
 - For now it's demonstrations
-- everything can be optimized (:
-    
+- everything can be optimized (: )
+
 ## How can you tell if you are wasteful?
 - profiling
-  - "how much time spending in this loop?"
+- "how much time spending in this loop?"
 
 ## Lanes and bottlenecks during design
 - how many of "those" can I do per second
-  - which is the limiting factor = bottleneck
+- which is the limiting factor = bottleneck
 
 ## Asymptotic performance
 - also important
@@ -250,54 +250,54 @@ Because there are many dependencies on loads it is very important.
 ## Power usage reduction
 - in general achieved through reduced instructions
 - same thing the *majority* of the time
-  - reducing waste
+- reducing waste
 
 ## Signed and unsigned integers
 - are the same because of *two's complement*
 - except for:
-  - mul/div/gt
+- mul/div/gt
 - saturated add :: stops at lowest/highest value
 - name of instructions tells the compiler which instruction to use
 - unsigned/signed is not needed and could be replaced by a different operator
 
 ## Can compilers SIMD?
 - gcc and clang are agressive at vectorization
-  - generally better than nothing
+- generally better than nothing
 
 ## SIMD: AMD vs Intel
 - no. (long-term)
 
 ## Are unused registers ignored?
 - modern chips (CPU/GPU) have two types of registers:
-  - Scalar
-    - slot
-    - more than Vector ones
-  - SIMD ("Vector")
-    - 8/16/32/64/128/256 of the 256bits
-    - Using larger bits is more expensive
-    - VZeroUpper after using different sizes
-  - Special considerations per register
-  - tip: *SIMD if you can*
+- Scalar
+- slot
+- more than Vector ones
+- SIMD ("Vector")
+- 8/16/32/64/128/256 of the 256bits
+- Using larger bits is more expensive
+- VZeroUpper after using different sizes
+- Special considerations per register
+- tip: *SIMD if you can*
 
 
 ## CPU vs GPU
 - GPUs are the same for parallellism but with different trade-offs
-  - 1024bit Vectors / Wide execution units
-  - CPU
-    - high clock
-    - high IPC/IPL
-  - GPU
-    - more ALUs (on the chip)
-    - more queues (pipelining)
-    - more hyperthreads
+- 1024bit Vectors / Wide execution units
+- CPU
+- high clock
+- high IPC/IPL
+- GPU
+- more ALUs (on the chip)
+- more queues (pipelining)
+- more hyperthreads
 - CPU were designed for single core execution
 - GPU does not look ahead, but is told
 - *Both* are SIMD CPUs
 - *benefits:*
-  - massive parallellization
-  - lots of math ops
+- massive parallellization
+- lots of math ops
 - Switch can be difficult (talkin between both)
-  - unless APU
+- unless APU
 
 ## Non-deterministic architectures
 - You cannot depend on timings
@@ -311,13 +311,13 @@ Because there are many dependencies on loads it is very important.
 ## SIMD without SIMD
 - leave one bit for overflow
 - SIMD registers handle overflows and carrying
-  
+
 ## Slowdown when 256/512 registers
 - Most machines downclocks when using AVX
-  
+
 ## Hardware Jungle: SIMD edition
 - 'cpu_id' tells what instructions sets the CPU supports
-  - set function pointers accordingly
+- set function pointers accordingly
 - SHIM? 
 
 
@@ -329,21 +329,21 @@ Because there are many dependencies on loads it is very important.
 - only if no one can tell the order was violated
 - inside a window
 - limited:
-  - how many things at once
+- how many things at once
 - but, retiring finished instructions happen in order
 - rolling window
-  - waiting for instructions to be done
+- waiting for instructions to be done
 
 ## SIMD dataset requirements
 - "Shot"
 - "Tail"
 - You can padd you inputs
 - Mass loads/stores (on modern instruction sets)
-  - will write bit per lane
-  - along with masks you can choose lanes
+- will write bit per lane
+- along with masks you can choose lanes
 - Vector/Packed instructions set
-  - Packed: operate on x elements (with a mask)
-  - Vector: VLen (Vector Length) says how much elements
+- Packed: operate on x elements (with a mask)
+- Vector: VLen (Vector Length) says how much elements
 - Scaler loop in worst case scenario
 
 ## Cost of SIMD
@@ -358,18 +358,18 @@ Because there are many dependencies on loads it is very important.
 ## Instructions Limits
 - there is a limit on the number of micro-ops a cycle
 - 5 micro-ops cannot be adds
-  - load tides up the execution port
+- load tides up the execution port
 - Registers are next to the lanes
 
 ## Cache control
 - responsive, guesses
 - "hints"
-  - prefetch instruction :: tries to get the memory in cache
-    - what level (not always followed, hint!)
-    - when look ahead is not going to see the loads
-  - streaming instruction :: forbid to load the data in the cache
-    - opposite of prefetch
-  - streaming store :: a store that is not going to be read in the future
+- prefetch instruction :: tries to get the memory in cache
+- what level (not always followed, hint!)
+- when look ahead is not going to see the loads
+- streaming instruction :: forbid to load the data in the cache
+- opposite of prefetch
+- streaming store :: a store that is not going to be read in the future
 - only matters when you have data you *do* want to cache
 
 
@@ -382,8 +382,8 @@ Because there are many dependencies on loads it is very important.
 ## Prefetches
 - hardware and software
 - hardware ::
-  - looks at the pattern of pages
-  - linearly (ascending/descending/skipping/...) 
+- looks at the pattern of pages
+- linearly (ascending/descending/skipping/...) 
 - eliminates latency
 - throughput stays the same (cache bandwith)
 
@@ -399,12 +399,12 @@ Because there are many dependencies on loads it is very important.
 ## Cache lines
 - every 64 bytes
 - being memory aligned penalties :: (not very high)
-  - 4096B (page boundaries)
+- 4096B (page boundaries)
 - can pollute cache
-  - waste of cache space
+- waste of cache space
 - [[file:./img/cache_lines.png][cache_lines]]
 - best to use all the cache lines (all 64 bytes)
-  - via data structures
+- via data structures
 
 ## Checking the cache
 - checking and getting happens in one instruction
@@ -418,9 +418,9 @@ Because there are many dependencies on loads it is very important.
 
 ## Instructions in cache
 - Front end ::
-  - ICache
+- ICache
 - Back end ::
-  - DCache
+- DCache
 - Separate for the L1
 - Unpredicted instructions can slow down the program
 - In L2/L3 cache instructions take space.
@@ -431,26 +431,26 @@ Because there are many dependencies on loads it is very important.
 
 ## Cache behaviour
 - branch predictor :: which way
-  - sophisticated
+- sophisticated
 - hardware prefetcher :: which memory is going to be touched
-  - recognizes patterns and puts *next* memory in cache
-  - not smart
+- recognizes patterns and puts *next* memory in cache
+- not smart
 - "warmed up"
 
 ## Persistent cache
 - OS wipes out with new memory map
-    
+
 ## Ask for cache
 - Evict train
-  - evict, ask L2, evict, ask L3, evict ask memory, fill evicts
+- evict, ask L2, evict, ask L3, evict ask memory, fill evicts
 - DMA (Direct Memory Acces)
 
 ## Inclusive vs Exclusive Caches
 - exclusive cache ::
-  - data is not in L2
-  - only when evicted from L1
+- data is not in L2
+- only when evicted from L1
 - inclusive cache ::
-  - L1 and L2 are filled with the data
+- L1 and L2 are filled with the data
 - per chip
 
 # 10. [Multithreading](https://www.computerenhance.com/p/multithreading)
@@ -458,20 +458,20 @@ Because there are many dependencies on loads it is very important.
 
 ## Multithreading
 - Core :: different computers
-  - physical
+- physical
 - Threads :: interface to access cores through the OS
-  - OS
+- OS
 
 ## Speeding up
 - not x2 x4, actually account cache for speed up
 - more SIMD registers, instructions cache, ...
 - shared caches add up
 - memory bandwidth can be bottleneck
-  - sometimes does not add up
+- sometimes does not add up
 
 ## Forcing out of memory
 - bandwith does not increase a lot when using main memory
-  - depending on the chip
+- depending on the chip
 - L3 cache and main memory are shared (not big speed ups)
 
 # 11. [Python Revisited](https://www.computerenhance.com/p/python-revisited)
@@ -483,52 +483,52 @@ Assembly is what determines the speed.
 # 12. [Monday Q&A #3 (2023-02-20)](https://www.computerenhance.com/p/monday-q-and-a-3-2023-02-20)
 ## Hyperthreading & Branch prediction
 - hyperthreads ::
-  - [[./img/hyperthreading.png][hyperthreading]]
-  - polling for more than one instructions
-  - very important in GPUs
-  - fill the execution ports with multiple instruction streams
-    - both go to the front end
+- [[./img/hyperthreading.png][hyperthreading]]
+- polling for more than one instructions
+- very important in GPUs
+- fill the execution ports with multiple instruction streams
+- both go to the front end
 - branch prediction ::
-  - [[file:./img/branch_prediction.png][branch_prediction]]
-  - uops arrive faster than they are executed
-    - they can be processed
-  - 1. stall on jumps
-    - flush uops (10-14 cycles)
-    - bad for out-of-order/IPL
-  - 2. guess
-    - wrong = stall
+- [[file:./img/branch_prediction.png][branch_prediction]]
+- uops arrive faster than they are executed
+- they can be processed
+- 1. stall on jumps
+- flush uops (10-14 cycles)
+- bad for out-of-order/IPL
+- 2. guess
+- wrong = stall
 - front end feeds instructions into micro-ops to the back end
 - IPC: more execution ports filled
 
 
 ## Multithreaded
 - code so that threads do not talk to each other
-  - communication is a mistake
+- communication is a mistake
 - sync the code
 
 
 ## Max multiplier mulitthreading
 - fetching memory is slower than computation
 - look at all-core-bandwith
-  - total bandwith to all cores
-  - divided by cores = max memory per cycle
-    
+- total bandwith to all cores
+- divided by cores = max memory per cycle
+
 
 ## Logical processors vs Cores
 - Cores = computers
 - Logical processors
-  - OS / threads / instruction streams
+- OS / threads / instruction streams
 
 
 ## thread count > L1 cache
 - oversubscription ::
-  - when the program asks for more threads than available
-  - lot of eviction
-  - OS overhead
-  - bad *always*
-    - unless waiting thread
+- when the program asks for more threads than available
+- lot of eviction
+- OS overhead
+- bad *always*
+- unless waiting thread
 - OS tries to run thread as long as possible
-  
+
 
 ## Green thread / fibers
 - software control swapping of the OS
@@ -536,9 +536,9 @@ Assembly is what determines the speed.
 
 ## Multithreadeding with disks
 - micromanagement
-  - when CPU has to decrypt
+- when CPU has to decrypt
 - depends on how disk works
-  - autonomous/not
+- autonomous/not
 - threads can make non blocking code
 
 
@@ -548,7 +548,7 @@ Assembly is what determines the speed.
 # 13. [The Haversine Distance Problem](https://www.computerenhance.com/p/the-haversine-distance-problem)
 - Computing arc length between two coordinates.
 - You want to do the math first.
-    - CPU is made for it
+- CPU is made for it
 - Second is the *Input*
 - Reading the data can take a long time.
 
@@ -564,33 +564,33 @@ The 8086 instruction set architecture is easier.
 
 ## Operations
 1. load memory
-   - copy into register
+- copy into register
 2. compute
 3. write to memory
-   
+
 ## Instruction Decode
 Turning the instruction stream into hardware operations.
 
 ## Instructions
 - mov ::
-  - move, but actually a /copy/
+- move, but actually a /copy/
 - are assembled into binary that the /Instruction Decoder/ can use to
-  execute the instruction
+execute the instruction
 - stored in 2x 8bits
-  - [[./img/instruction_encoding.png][image]]
-  - instruction (6) :: code for the instruction
-  - flags
-    - D (1) :: whether REG is source or destination
-    - W (1) :: 16bits or not
-  - second byte:
-    - MOD (2) :: memory or register operation
-    - REG (3) :: encodes register
-    - R/M (3) :: register/memory operation
-      - operand
-    - AX/AL/AH ::
-      - X: wide
-      - L: low bits
-      - H: high bits
+- [[./img/instruction_encoding.png][image]]
+- instruction (6) :: code for the instruction
+- flags
+- D (1) :: whether REG is source or destination
+- W (1) :: 16bits or not
+- second byte:
+- MOD (2) :: memory or register operation
+- REG (3) :: encodes register
+- R/M (3) :: register/memory operation
+- operand
+- AX/AL/AH ::
+- X: wide
+- L: low bits
+- H: high bits
 
 Binary Instruction stream
 - only register to register moves
@@ -600,7 +600,7 @@ Exercise:
 - bit manipulation to extract the bits
 - *assemble the listings
 - load 2 bytes and disassemble that instruction
-  - outputs the instructions
+- outputs the instructions
 
 # 16. [Decoding Multiple Instructions and Suffixes](https://www.computerenhance.com/p/decoding-multiple-instructions-and)
 1st byte tells if there's a second, 2nd if there's a 3rd, ...
@@ -609,19 +609,19 @@ Exercise:
 The D bit is the difference between a store and a load
 
 - Effective address calculation :: Adress that needs to be computed
-  before it can be resolved, e.g. [BP + 75] (this is also a displacement)
+before it can be resolved, e.g. [BP + 75] (this is also a displacement)
 
 MOD field 
 
 - displacement ::
-  - [ ... + n] where n is a n-bit number either 0, 8 or 16 bits
-  - defined by the MOD field
-    - direct address still has a displacement (MOD = 00)
-    - BP 110, has this 16bits
-  - [displacement][img/displacement.png]
+- [ ... + n] where n is a n-bit number either 0, 8 or 16 bits
+- defined by the MOD field
+- direct address still has a displacement (MOD = 00)
+- BP 110, has this 16bits
+- [displacement][img/displacement.png]
 
 - Some registers can be adressed as their low or high bits (L/H)
-  - [[file:./img/l_h_registers.png][l_h_registers]]
+- [[file:./img/l_h_registers.png][l_h_registers]]
 
 The R/M field encodes what type of displacement. (BP, BX, SI, DI)
 
@@ -645,7 +645,7 @@ When reassembling signed/unsigned information will be lost.
 - look up how negative displacements work in the manual
 - byte/word is a different move
 - different instruction for accumulator
-  - to save a byte
+- to save a byte
 # 17. [Monday Q&A #4 (2023-03-06)](https://www.computerenhance.com/p/monday-q-and-a-4-2023-03-06)
 
 # 18. [Opcode Patterns in 8086 Arithmetic](https://www.computerenhance.com/p/opcode-patterns-in-8086-arithmetic)
@@ -808,9 +808,9 @@ Aligment
 - Old processor would require memory alignment for some instructions
 - Nowadays unaligned loads have mostly no penalties
 - The unit of operation for CPUs is a cache line i.e., 64 aligned bytes.
-  - This means if your data is unaligned you might end up using more cache lines than needed
-  - In a multicore setup threads will communicate via cache lines and their might be contension and threads
-    might be writing to the same cache lines.
+- This means if your data is unaligned you might end up using more cache lines than needed
+- In a multicore setup threads will communicate via cache lines and their might be contension and threads
+might be writing to the same cache lines.
 
 cpuid will put information into registers so you can query the capabilities
 
@@ -847,9 +847,32 @@ RDTSC does not work reliably on zen cores, there are other instructions. And is 
 
 The chance of getting pre-empted is small when taking casual timings. (e.g., single core).  The OS provides more information about this as well.
 
+When cores communicate via the cache line they use protocols, (the original being MESI).
+x64 has a very strong memory ordering protocol.
+Cores can request exclusive access to cache lines.
+
+False share happens when your memory is unaligned and cores end up modifying the same data without you knowing.
+
 # 55. [How does QueryPerformanceCounter measure time?](https://www.computerenhance.com/p/how-does-queryperformancecounter)
+RDTSC is available on mostly (if not all) CPUs.
+
+It is better to use RDTSC yourself, because `QueryPerformanceCounter()` will multiply it by 10MHz. 
+
+Uses a trick in hacker's delight to turn the division into a multiplication. 
+
 # 56. [Monday Q&A #17 (2023-06-26)](https://www.computerenhance.com/p/monday-q-and-a-17-2023-06-26)
+In win64 ABI first parameter is in RCX (if it can).
+
+There are instructions for assembly instructions that you cannot do in C. E.g., _mulh(), _mul128()
+Microsoft symbol server.
+
+Low resolution timers can still be used if the implications are understood.
+
 # 57. [Instrumentation-Based Profiling](https://www.computerenhance.com/p/instrumentation-based-profiling)
+There are two comon ways to automate profiling
+1. Block based with begin and end (also found in commercial profilers)
+2. Marker based, where deltas are computed implicitly by the order they go in.
+
 # 58. [Monday Q&A #18 (2023-07-03)](https://www.computerenhance.com/p/monday-q-and-a-18-2023-07-03)
 # 59. [Profiling Nested Blocks](https://www.computerenhance.com/p/profiling-nested-blocks)
 # 60. [Monday Q&A #19 (2023-07-10)](https://www.computerenhance.com/p/monday-q-and-a-19-2023-07-10)

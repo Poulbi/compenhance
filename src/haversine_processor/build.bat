@@ -9,7 +9,7 @@ IF NOT EXIST ..\..\build mkdir ..\..\build
 
 pushd ..\..\build
 
-set Source=..\src\haversine_processor\haversine_processor.cpp
+set Source=..\src\haversine_processor\json_parser.cpp
 
 set Flags=-fsanitize-trap -nostdinc++ -g
 Set Flags=%Flags% -Wall -Wextra -Wconversion -Wdouble-promotion -Wno-sign-conversion -Wno-sign-compare -Wno-double-promotion -Wno-unused-but-set-variable -Wno-unused-variable -Wno-write-strings -Wno-pointer-arith -Wno-unused-parameter -Wno-unused-function
