@@ -6,7 +6,7 @@ ScriptDirectory="$(dirname "$(readlink -f "$0")")"
 cd "$ScriptDirectory"
 
 #- Globals
-CommonCompilerFlags="-DOS_LINUX=1 -fsanitize-trap -nostdinc++"
+CommonCompilerFlags="-DOS_LINUX=1 -fsanitize-trap -nostdinc++ -I../lib"
 CommonWarningFlags="-Wall -Wextra -Wconversion -Wdouble-promotion -Wno-sign-conversion -Wno-sign-compare -Wno-double-promotion -Wno-unused-but-set-variable -Wno-unused-variable -Wno-write-strings -Wno-pointer-arith -Wno-unused-parameter -Wno-unused-function -Wno-format"
 LinkerFlags="-lm"
 
@@ -48,4 +48,11 @@ printf '[%s compile]\n' "$Compiler"
 Build="../../build"
 mkdir -p "$Build"
 
-$Compiler $Flags -o "$Build"/haversine_processor haversine_processor.cpp
+build() #source
+{
+	printf '%s\n' "$1"
+	$Compiler $Flags -o "$Build"/${1%.cpp} $1
+}
+
+true && build "json_parser.cpp"
+true && build "haversine_processor.cpp"

@@ -1,4 +1,5 @@
 
+#include <stdlib.h>
 #include <stdint.h>
 #include <stddef.h>
 
@@ -9,7 +10,8 @@
 # define RADDBG_MARKUP_STUBS
 #endif
 
-#include "libs/raddbg_markup.h"
+#include <raddbg_markup.h>
+#include <lr/lr.h>
 
 typedef uint8_t u8;
 typedef uint32_t u32;
@@ -28,8 +30,6 @@ struct str8
 };
 raddbg_type_view(str8, no_addr(array((char *)Data, Size)));
 #define S8Lit(String) (str8){.Data = (u8 *)(String), .Size = (sizeof((String)) - 1)}
-
-#define Assert(Expression) if(!(Expression)) { *(int *)0 = 0; }
 
 #include "os.c"
 
@@ -112,6 +112,35 @@ b32 IsWhiteSpace(u8 Char)
     return Result;
 }
 
+b32 IsDigit(u8 Char)
+{
+	b32 Result = ((Char >= '0') && (Char <= '9'));
+	return Result;
+}
+
+json_token *GetJSONToken(str8 Buffer, u64 *Pos);
+
+void GetJSONTokenList(str8 Buffer, json_token *Token, json_token_type Type, u64 *Pos, u8 EndChar)
+{
+				Token->Type = Type;
+				*Pos += 1;
+				json_token *Child = 0;
+				while(*Pos < Buffer.Size && Buffer.Data[*Pos] != EndChar)
+				{
+								if(!Token->Child)
+								{
+												Child = GetJSONToken(Buffer, Pos);
+												Token->Child = Child;
+								}
+								else
+								{
+												Child->Next = GetJSONToken(Buffer, Pos);
+												Child = Child->Next;
+								}
+								while(*Pos < Buffer.Size && IsWhiteSpace(Buffer.Data[*Pos])) *Pos += 1;
+				}
+}
+
 json_token *GetJSONToken(str8 Buffer, u64 *Pos)
 {
     json_token *Token = (json_token *)malloc(sizeof(json_token));
@@ -125,37 +154,20 @@ json_token *GetJSONToken(str8 Buffer, u64 *Pos)
     u64 TokenStart = *Pos;
     
     str8 Keyword = {};
-    
+
     switch(Buffer.Data[*Pos])
     {
-        case '{':
-        {
-            Token->Type = JSONTokenType_Object;
-            *Pos += 1;
-            json_token *Child = 0;
-            while(*Pos < Buffer.Size && Buffer.Data[*Pos] != '}')
-            {
-                if(!Token->Child)
-                {
-                    Child = GetJSONToken(Buffer, Pos);
-                    Token->Child = Child;
-                }
-                else
-                {
-                    Child->Next = GetJSONToken(Buffer, Pos);
-                    Child = Child->Next;
-                }
-            }
-            
-        } break;
+        case '{': GetJSONTokenList(Buffer, Token, JSONTokenType_Object, Pos, '}'); break;
+        case '[': GetJSONTokenList(Buffer, Token, JSONTokenType_Array,  Pos, ']'); break;
         
-        case '[':
-        {
-            Token->Type = JSONTokenType_Array;
-            // TODO: Parse list until ']'
-        } break;
-        
-        case '"':
+        case ':': Token->Type = JSONTokenType_Colon; break;
+        case ',': Token->Type = JSONTokenType_Comma; break;
+
+        case 't': Keyword = S8Lit("true");  Token->Type = JSONTokenType_True;  break;
+        case 'f': Keyword = S8Lit("false"); Token->Type = JSONTokenType_False; break;
+        case 'n': Keyword = S8Lit("null");  Token->Type = JSONTokenType_Null;  break;
+
+								case '"':
         {
             Token->Type = JSONTokenType_String;
             
@@ -165,7 +177,7 @@ json_token *GetJSONToken(str8 Buffer, u64 *Pos)
             {
                 *Pos += 1;
                 if(Buffer.Data[*Pos] == '\\') continue;
-                if(Buffer.Data[*Pos] == '"') break;
+                if(Buffer.Data[*Pos] == '"')  break;
             }
             
             if(*Pos >= Buffer.Size)
@@ -173,30 +185,65 @@ json_token *GetJSONToken(str8 Buffer, u64 *Pos)
                 Token->Type = JSONTokenType_Error;
                 Token->ErrorAt = At;
             }
-            
-        } break;
-        
-        case ':': Token->Type = JSONTokenType_Colon; break;
-        case ',': Token->Type = JSONTokenType_Comma; break;
-        case 't': Keyword = S8Lit("true");  Token->Type = JSONTokenType_True;  break;
-        case 'f': Keyword = S8Lit("false"); Token->Type = JSONTokenType_False; break;
-        case 'n': Keyword = S8Lit("null");  Token->Type = JSONTokenType_Null;  break;
+								} break;
+
+								default:
+								{
+									if(Buffer.Data[*Pos] == '-' ||
+											(Buffer.Data[*Pos] >= '0' && Buffer.Data[*Pos] <= '9'))
+									{
+										Token->Type = JSONTokenType_Number;
+
+										f64 Number = 0;
+
+										if(Buffer.Data[*Pos] == '-')
+										{
+											*Pos += 1;
+										}
+
+										while(*Pos < Buffer.Size)
+										{
+													if(0) {}
+													else if(IsDigit(Buffer.Data[*Pos]))
+													{
+													}
+													else if(Buffer.Data[*Pos] == '.')
+													{
+														*Pos += 1;
+														while(*Pos < Buffer.Size && IsDigit(Buffer.Data[*Pos])) *Pos += 1;
+														break;
+													}
+
+													*Pos += 1;
+										}
+
+										if(Buffer.Data[*Pos] == 'e' || Buffer.Data[*Pos] == 'E')
+										{
+											*Pos += 1;
+
+											if(Buffer.Data[*Pos] == '+')
+											{
+												*Pos += 1;
+											}
+											else if(Buffer.Data[*Pos] == '-')
+											{
+												*Pos += 1;
+											}
+
+											while(*Pos < Buffer.Size && IsDigit(Buffer.Data[*Pos]))
+											{
+												*Pos += 1;
+											}
+
+
+										}
+
+										*Pos -= 1;
+
+									}
+								} break;
     }
     
-    if(Buffer.Data[*Pos] == '-' ||
-       (Buffer.Data[*Pos] >= '0' &&
-        Buffer.Data[*Pos] <= '9'))
-    {
-        Token->Type = JSONTokenType_Number;
-        
-        f64 Number;
-        
-        if(Buffer.Data[*Pos] == '-')
-        {
-            *Pos += 1;
-        }
-        
-    }
     
     if(Keyword.Size)
     {
@@ -219,25 +266,13 @@ json_token *GetJSONToken(str8 Buffer, u64 *Pos)
     return Token;
 }
 
-u64 ParseHaversinePairs(str8 In, u64 MaxPairCount, haversine_pair *Pairs)
-{
-    u64 Result = 0;
-    
-    return Result;
-}
-
-int main(void)
+int main(int ArgsCount, char *Args[])
 {
     u64 MaxPairCount = 100000000;
     
-    haversine_pair *Pairs = (haversine_pair *)malloc(sizeof(haversine_pair)*1000);
-    
-    str8 In= S8Lit("{\"count\": 3}");
-    
-    u64 Pos = 0;
+				str8 In = ReadEntireFileIntoMemory(Args[1]);
+				u64 Pos = 0;
     json_token *JSON = GetJSONToken(In, &Pos);
-    
-    free(Pairs);
     
     return 0;
 }
