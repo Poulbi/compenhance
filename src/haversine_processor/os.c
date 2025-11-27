@@ -51,15 +51,21 @@ str8 ReadEntireFileIntoMemory(char *FileName)
 {
     str8 Result = {};
     
-    int File = open(FileName, O_RDONLY);
-    
-    struct stat StatBuffer = {};
-    int Error = fstat(File, &StatBuffer);
-    AssertErrnoNotEquals(Error, -1);
-    
-    Result.Size = StatBuffer.st_size;
-    Result.Data = (u8 *)mmap(0, Result.Size, PROT_READ, MAP_PRIVATE, File, 0);
-    AssertErrnoNotEquals((smm)Result.Data, (smm)MAP_FAILED);
+    if(FileName)
+    {
+        int File = open(FileName, O_RDONLY);
+        
+        if(File != -1)
+        {
+            struct stat StatBuffer = {};
+            int Error = fstat(File, &StatBuffer);
+            AssertErrnoNotEquals(Error, -1);
+            
+            Result.Size = StatBuffer.st_size;
+            Result.Data = (u8 *)mmap(0, Result.Size, PROT_READ, MAP_PRIVATE, File, 0);
+            AssertErrnoNotEquals((smm)Result.Data, (smm)MAP_FAILED);
+        }
+    }
     
     return Result;
 }
