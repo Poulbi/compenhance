@@ -269,6 +269,40 @@ json_token *GetJSONToken(str8 Buffer, u64 *Pos)
     return Token;
 }
 
+json_token *JSONLookupIdentifierValue(json_token *Token, str8 Identifier)
+{
+    json_token *Found = 0;
+    
+    for(json_token *Search = Token->Child;
+        Search;
+        Search = Search->Next)
+    {
+        if(MatchString(Search->Value, Identifier, 0))
+        {
+            Found = Search;
+            break;
+        }
+        
+        Assert(Search->Next->Type == JSONTokenType_Colon);
+        Assert(Search->Next->Next->Type == JSONTokenType_Number);
+        Search = Search->Next->Next;
+        
+        if(Search->Next)
+        {
+            Assert(Search->Next->Type == JSONTokenType_Comma);
+            Search = Search->Next;
+        }
+    }
+    
+    if(Found)
+    {
+        Assert(Found->Next->Type == JSONTokenType_Colon);
+        Found = Found->Next->Next;
+    }
+    
+    return Found;
+}
+
 int main(int ArgsCount, char *Args[])
 {
     u64 MaxPairCount = 100000000;
@@ -296,6 +330,14 @@ int main(int ArgsCount, char *Args[])
                 Pair = Pair->Next)
             {
                 LogFormat("%.*s\n", Pair->Value.Size, Pair->Value.Data);
+                
+                json_token *X0 = JSONLookupIdentifierValue(Pair, S8Lit("\"x0\""));
+                // TODO(luca): Convert to floating point number.
+                f64 X0Value = 0;
+                
+                json_token *Y0 = JSONLookupIdentifierValue(Pair, S8Lit("\"y0\""));
+                json_token *X1 = JSONLookupIdentifierValue(Pair, S8Lit("\"x1\""));
+                json_token *Y1 = JSONLookupIdentifierValue(Pair, S8Lit("\"y1\""));
                 
                 if(Pair->Next)
                 {
