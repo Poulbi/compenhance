@@ -1,10 +1,10 @@
 //~ Libraries
-#include "../lib/lr/lr.h"
+#include "lr/lr.h"
 PUSH_WARNINGS
 #define STB_SPRINTF_IMPLEMENTATION
-#include "libs/stb_sprintf.h"
+#include "stb_sprintf.h"
+#include "listing_065.cpp"
 POP_WARNINGS
-#include "libs/listing_065.cpp"
 
 //~ Standard library
 #include <stdio.h>

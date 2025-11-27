@@ -1,6 +1,37 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+global_variable u8 LogBuffer[Kilobytes(64)];
+
+#if OS_LINUX
+#include <errno.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#define STB_SPRINTF_IMPLEMENTATION
+#include "../lib/stb_sprintf.h"
+#endif
+
+//- Debug utilities 
+void AssertErrnoNotEquals(smm Result, smm ErrorValue)
+{
+    if(Result == ErrorValue)
+    {
+        int Errno = errno;
+        Assert(0);
+    }
+}
+
+void AssertErrnoEquals(smm Result, smm ErrorValue)
+{
+    if(Result != ErrorValue)
+    {
+        int Errno = errno;
+        Assert(0);
+    }
+}
+
 void LogFormat(char *Format, ...)
 {
     va_list Args;

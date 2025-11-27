@@ -1,20 +1,8 @@
 #include "../lib/lr/lr.h"
-#define STB_SPRINTF_IMPLEMENTATION
-#include "libs/stb_sprintf.h"
-#include "libs/listing_0070_platform_metrics.cpp"
+#include "../lib/listing_0070_platform_metrics.cpp"
 
 #include <stdio.h>
 #include <math.h>
-#include <errno.h>
-
-#if OS_LINUX
-# include <unistd.h>
-# include <fcntl.h>
-# include <sys/mman.h>
-# include <sys/stat.h>
-#elif OS_WINDOWS
-# include <windows.h>
-#endif
 
 //~ Types
 struct str8
@@ -23,9 +11,6 @@ struct str8
     umm Size;
 };
 #define S8Lit(String) (str8){.Data = (u8 *)(String), .Size = (sizeof((String)) - 1)}
-
-//~ Globals
-global_variable u8 LogBuffer[Kilobytes(64)];
 
 //~ Functions
 
@@ -90,25 +75,6 @@ static f64 ReferenceHaversine(f64 X0, f64 Y0, f64 X1, f64 Y1, f64 EarthRadius)
     f64 Result = EarthRadius * c;
     
     return Result;
-}
-
-//- Debug utilities 
-void AssertErrnoNotEquals(smm Result, smm ErrorValue)
-{
-    if(Result == ErrorValue)
-    {
-        int Errno = errno;
-        Assert(0);
-    }
-}
-
-void AssertErrnoEquals(smm Result, smm ErrorValue)
-{
-    if(Result != ErrorValue)
-    {
-        int Errno = errno;
-        Assert(0);
-    }
 }
 
 #include "os.c"

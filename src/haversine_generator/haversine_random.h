@@ -1,6 +1,6 @@
 #include <math.h>
 PUSH_WARNINGS
-#include "libs/pcg/pcg.c"
+#include "pcg/pcg.c"
 POP_WARNINGS
 
 #define CountLeadingZeroes64(Value)	__builtin_clzll(Value)
