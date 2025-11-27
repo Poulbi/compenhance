@@ -45,7 +45,9 @@ raddbg_type_view(str8, no_addr(array((char *)Data, Size)));
 
 enum json_token_type
 {
-    JSONTokenType_Object = 0,
+    JSONTokenType_None = 0,
+    
+    JSONTokenType_Object,
     JSONTokenType_Array,
     JSONTokenType_Number,
     JSONTokenType_String,
@@ -122,146 +124,147 @@ json_token *GetJSONToken(str8 Buffer, u64 *Pos);
 
 void GetJSONTokenList(str8 Buffer, json_token *Token, json_token_type Type, u64 *Pos, u8 EndChar)
 {
-				Token->Type = Type;
-				*Pos += 1;
-				json_token *Child = 0;
-				while(*Pos < Buffer.Size && Buffer.Data[*Pos] != EndChar)
-				{
-								if(!Token->Child)
-								{
-												Child = GetJSONToken(Buffer, Pos);
-												Token->Child = Child;
-								}
-								else
-								{
-												Child->Next = GetJSONToken(Buffer, Pos);
-												Child = Child->Next;
-								}
-								while(*Pos < Buffer.Size && IsWhiteSpace(Buffer.Data[*Pos])) *Pos += 1;
-				}
+    Token->Type = Type;
+    *Pos += 1;
+    json_token *Child = 0;
+    while(*Pos < Buffer.Size && Buffer.Data[*Pos] != EndChar)
+    {
+        if(!Token->Child)
+        {
+            Child = GetJSONToken(Buffer, Pos);
+            Token->Child = Child;
+        }
+        else
+        {
+            Child->Next = GetJSONToken(Buffer, Pos);
+            Child = Child->Next;
+        }
+        while(*Pos < Buffer.Size && IsWhiteSpace(Buffer.Data[*Pos])) *Pos += 1;
+    }
 }
 
 json_token *GetJSONToken(str8 Buffer, u64 *Pos)
 {
     json_token *Token = (json_token *)malloc(sizeof(json_token));
+    Assert(Token);
     *Token = {};
     
-    Assert(*Pos < Buffer.Size);
-    
-    while(*Pos < Buffer.Size && IsWhiteSpace(Buffer.Data[*Pos])) *Pos += 1;
-    Assert(*Pos < Buffer.Size);
-    
-    u64 TokenStart = *Pos;
-    
-    str8 Keyword = {};
-
-    switch(Buffer.Data[*Pos])
+    if(*Pos < Buffer.Size)
     {
-        case '{': GetJSONTokenList(Buffer, Token, JSONTokenType_Object, Pos, '}'); break;
-        case '[': GetJSONTokenList(Buffer, Token, JSONTokenType_Array,  Pos, ']'); break;
+        while(*Pos < Buffer.Size && IsWhiteSpace(Buffer.Data[*Pos])) *Pos += 1;
+        Assert(*Pos < Buffer.Size);
         
-        case ':': Token->Type = JSONTokenType_Colon; break;
-        case ',': Token->Type = JSONTokenType_Comma; break;
-
-        case 't': Keyword = S8Lit("true");  Token->Type = JSONTokenType_True;  break;
-        case 'f': Keyword = S8Lit("false"); Token->Type = JSONTokenType_False; break;
-        case 'n': Keyword = S8Lit("null");  Token->Type = JSONTokenType_Null;  break;
-
-								case '"':
+        u64 TokenStart = *Pos;
+        
+        str8 Keyword = {};
+        
+        switch(Buffer.Data[*Pos])
         {
-            Token->Type = JSONTokenType_String;
+            case '{': GetJSONTokenList(Buffer, Token, JSONTokenType_Object, Pos, '}'); break;
+            case '[': GetJSONTokenList(Buffer, Token, JSONTokenType_Array,  Pos, ']'); break;
             
-            u64 At = *Pos;
-            Token->Value.Data = Buffer.Data + At;
-            while(*Pos < Buffer.Size)
+            case ':': Token->Type = JSONTokenType_Colon; break;
+            case ',': Token->Type = JSONTokenType_Comma; break;
+            
+            case 't': Keyword = S8Lit("true");  Token->Type = JSONTokenType_True;  break;
+            case 'f': Keyword = S8Lit("false"); Token->Type = JSONTokenType_False; break;
+            case 'n': Keyword = S8Lit("null");  Token->Type = JSONTokenType_Null;  break;
+            
+            case '"':
             {
-                *Pos += 1;
-                if(Buffer.Data[*Pos] == '\\') continue;
-                if(Buffer.Data[*Pos] == '"')  break;
-            }
+                Token->Type = JSONTokenType_String;
+                
+                u64 At = *Pos;
+                Token->Value.Data = Buffer.Data + At;
+                while(*Pos < Buffer.Size)
+                {
+                    *Pos += 1;
+                    if(Buffer.Data[*Pos] == '\\') continue;
+                    if(Buffer.Data[*Pos] == '"')  break;
+                }
+                
+                if(*Pos >= Buffer.Size)
+                {
+                    Token->Type = JSONTokenType_Error;
+                    Token->ErrorAt = At;
+                }
+            } break;
             
-            if(*Pos >= Buffer.Size)
+            default:
+            {
+                if(Buffer.Data[*Pos] == '-' ||
+                   (Buffer.Data[*Pos] >= '0' && Buffer.Data[*Pos] <= '9'))
+                {
+                    Token->Type = JSONTokenType_Number;
+                    
+                    f64 Number = 0;
+                    
+                    if(Buffer.Data[*Pos] == '-')
+                    {
+                        *Pos += 1;
+                    }
+                    
+                    while(*Pos < Buffer.Size)
+                    {
+                        if(0) {}
+                        else if(IsDigit(Buffer.Data[*Pos]))
+                        {
+                        }
+                        else if(Buffer.Data[*Pos] == '.')
+                        {
+                            *Pos += 1;
+                            while(*Pos < Buffer.Size && IsDigit(Buffer.Data[*Pos])) *Pos += 1;
+                            break;
+                        }
+                        
+                        *Pos += 1;
+                    }
+                    
+                    if(Buffer.Data[*Pos] == 'e' || Buffer.Data[*Pos] == 'E')
+                    {
+                        *Pos += 1;
+                        
+                        if(Buffer.Data[*Pos] == '+')
+                        {
+                            *Pos += 1;
+                        }
+                        else if(Buffer.Data[*Pos] == '-')
+                        {
+                            *Pos += 1;
+                        }
+                        
+                        while(*Pos < Buffer.Size && IsDigit(Buffer.Data[*Pos]))
+                        {
+                            *Pos += 1;
+                        }
+                        
+                    }
+                    
+                    *Pos -= 1;
+                    
+                }
+            } break;
+        }
+        
+        
+        if(Keyword.Size)
+        {
+            if(MatchString(Buffer, Keyword, *Pos))
+            {
+                *Pos += Keyword.Size - 1;
+            }
+            else
             {
                 Token->Type = JSONTokenType_Error;
-                Token->ErrorAt = At;
+                Token->ErrorAt = *Pos;
             }
-								} break;
-
-								default:
-								{
-									if(Buffer.Data[*Pos] == '-' ||
-											(Buffer.Data[*Pos] >= '0' && Buffer.Data[*Pos] <= '9'))
-									{
-										Token->Type = JSONTokenType_Number;
-
-										f64 Number = 0;
-
-										if(Buffer.Data[*Pos] == '-')
-										{
-											*Pos += 1;
-										}
-
-										while(*Pos < Buffer.Size)
-										{
-													if(0) {}
-													else if(IsDigit(Buffer.Data[*Pos]))
-													{
-													}
-													else if(Buffer.Data[*Pos] == '.')
-													{
-														*Pos += 1;
-														while(*Pos < Buffer.Size && IsDigit(Buffer.Data[*Pos])) *Pos += 1;
-														break;
-													}
-
-													*Pos += 1;
-										}
-
-										if(Buffer.Data[*Pos] == 'e' || Buffer.Data[*Pos] == 'E')
-										{
-											*Pos += 1;
-
-											if(Buffer.Data[*Pos] == '+')
-											{
-												*Pos += 1;
-											}
-											else if(Buffer.Data[*Pos] == '-')
-											{
-												*Pos += 1;
-											}
-
-											while(*Pos < Buffer.Size && IsDigit(Buffer.Data[*Pos]))
-											{
-												*Pos += 1;
-											}
-
-
-										}
-
-										*Pos -= 1;
-
-									}
-								} break;
-    }
-    
-    
-    if(Keyword.Size)
-    {
-        if(MatchString(Buffer, Keyword, *Pos))
-        {
-            *Pos += Keyword.Size - 1;
         }
-        else
-        {
-            Token->Type = JSONTokenType_Error;
-            Token->ErrorAt = *Pos;
-        }
+        
+        *Pos += 1;
+        
+        Token->Value.Data = Buffer.Data + TokenStart;
+        Token->Value.Size = *Pos - TokenStart;
     }
-    
-    *Pos += 1;
-    
-    Token->Value.Data = Buffer.Data + TokenStart;
-    Token->Value.Size = *Pos - TokenStart;
     
     return Token;
 }
@@ -270,9 +273,40 @@ int main(int ArgsCount, char *Args[])
 {
     u64 MaxPairCount = 100000000;
     
-				str8 In = ReadEntireFileIntoMemory(Args[1]);
-				u64 Pos = 0;
+    str8 In = ReadEntireFileIntoMemory(Args[1]);
+    u64 Pos = 0;
     json_token *JSON = GetJSONToken(In, &Pos);
+    
+    if(JSON->Type != JSONTokenType_None)
+    {
+        
+        if(MatchString(JSON->Child->Value, S8Lit("\"pairs\""), 0))
+        {
+            json_token *Pairs = JSON->Child;
+            // get object pair value
+            
+            Assert(Pairs->Type == JSONTokenType_String);
+            Assert(Pairs->Next->Type == JSONTokenType_Colon);
+            Assert(Pairs->Next->Next->Type == JSONTokenType_Array);
+            
+            json_token *PairsArray = Pairs->Next->Next;
+            
+            for(json_token *Pair = PairsArray->Child;
+                Pair;
+                Pair = Pair->Next)
+            {
+                LogFormat("%.*s\n", Pair->Value.Size, Pair->Value.Data);
+                
+                if(Pair->Next)
+                {
+                    Assert(Pair->Next->Type == JSONTokenType_Comma);
+                    Pair = Pair->Next;
+                }
+            }
+            
+        }
+        
+    }
     
     return 0;
 }
