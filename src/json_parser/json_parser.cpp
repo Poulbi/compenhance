@@ -1,4 +1,3 @@
-
 #include <stdlib.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -10,8 +9,8 @@
 # define RADDBG_MARKUP_STUBS
 #endif
 
-#include <raddbg_markup.h>
-#include <lr/lr.h>
+#include "raddbg_markup.h"
+#include "lr/lr.h"
 
 typedef uint8_t u8;
 typedef uint32_t u32;

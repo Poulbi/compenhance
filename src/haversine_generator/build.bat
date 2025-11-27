@@ -11,7 +11,7 @@ pushd ..\..\build
 
 set Source=..\src\haversine_generator\haversine_generator.cpp
 
-set Flags=-fsanitize-trap -g
+set Flags=-fsanitize-trap -g -I..\src\lib
 REM set Flags=-nostdinc++
 set Flags=%Flags% -Wall -Wextra -Wconversion -Wdouble-promotion -Wno-sign-conversion -Wno-sign-compare -Wno-double-promotion -Wno-unused-but-set-variable -Wno-unused-variable -Wno-write-strings -Wno-pointer-arith -Wno-unused-parameter -Wno-unused-function
 set Flags=%Flags% -fdiagnostics-absolute-paths -ftime-trace -Wno-null-dereference -Wno-missing-braces -Wno-vla-extension -Wno-writable-strings -Wno-missing-field-initializers -Wno-address-of-temporary -Wno-int-to-void-pointer-cast

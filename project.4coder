@@ -1,6 +1,7 @@
 version(2);
 project_name = "Computer Enhance";
-patterns = {
+patterns = 
+{
     "*.c",
     "*.mdesk",
     "*.cpp",
@@ -10,21 +11,47 @@ patterns = {
     "*.sh",
     "*.4coder",
 };
-blacklist_patterns = {
+blacklist_patterns = 
+{
     "_old.*",
 };
 
 paths =
 {
-    { .path = ".",     .recursive = false, .relative = true, },
-    { .path = "src/haversine_processor",   .recursive = true , .relative = true, },
+    { .path = ".",                 .recursive = false, .relative = true, },
+    { .path = "src/json_parser",   .recursive = true , .relative = true, },
 };
 
-load_paths = {
+load_paths = 
+{
     .win = paths,
     .linux = paths,
     .mac = paths,
 };
 
-// commands = {};
-// fkey_command = {};
+commands = 
+{
+    .build_haversine_processor =
+    {
+        .out = "*compilation*", .save_dirty_files = true,
+        .win = ".\src\haversine_processor\build.bat",
+        .linux = "./src/haversine_processor/build.sh",
+    },
+    .build_haversine_generator =
+    {
+        .out = "*compilation*", .save_dirty_files = true,
+        .win = ".\src\haversine_generator\build.bat",
+        .linux = "./src/haversine_generator/build.sh",
+    },
+    .build_json_parser =
+    {
+        .out = "*compilation*", .save_dirty_files = true,
+        .win = ".\src\json_parser\build.bat",
+        .linux = "./src/json_parser/build.sh",
+    },
+};
+
+fkey_command =
+{
+    .F1 = "build_json_parser",
+};

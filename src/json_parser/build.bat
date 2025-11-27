@@ -17,4 +17,4 @@ set Flags=%Flags% -fdiagnostics-absolute-paths -ftime-trace -Wno-null-dereferenc
 Set Flags=%Flags% -DOS_WINDOWS=1
 
 echo %Source%
-clang %Flags% -o haversine_processor.exe %Source%
+clang %Flags% -o json_parser.exe %Source%
