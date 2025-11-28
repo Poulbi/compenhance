@@ -20,6 +20,7 @@ paths =
 {
     { .path = ".",                 .recursive = false, .relative = true, },
     { .path = "src/json_parser",   .recursive = true , .relative = true, },
+    { .path = "src/lib",           .recursive = true , .relative = true, },
 };
 
 load_paths = 

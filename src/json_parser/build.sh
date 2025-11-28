@@ -54,4 +54,4 @@ build() #source
 	$Compiler $Flags -o "$Build"/${1%.cpp} $1
 }
 
-true && build "haversine_processor.cpp"
+true && build "json_parser.cpp"

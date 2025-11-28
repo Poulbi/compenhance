@@ -1,5 +1,5 @@
-#include "../lib/lr/lr.h"
-#include "../lib/listing_0070_platform_metrics.cpp"
+#include "lr/lr.h"
+#include "listing_0070_platform_metrics.cpp"
 
 #include <stdio.h>
 #include <math.h>

@@ -3,7 +3,7 @@
 PUSH_WARNINGS
 #define STB_SPRINTF_IMPLEMENTATION
 #include "stb_sprintf.h"
-#include "listing_065.cpp"
+#include "listing_0065_haversine_formula.cpp"
 POP_WARNINGS
 
 //~ Standard library
