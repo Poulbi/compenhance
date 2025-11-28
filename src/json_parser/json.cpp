@@ -1,4 +1,6 @@
 
+//~ Types
+
 enum json_token_type
 {
     JSON_TokenType_None = 0,
@@ -19,7 +21,6 @@ enum json_token_type
     JSON_TokenType_Count,
 };
 
-
 struct json_token
 {
     json_token_type Type;
@@ -31,6 +32,12 @@ struct json_token
     json_token *Child;
     json_token *Next;
 };
+
+//~ Globals
+
+global_variable json_token JSON_NilToken;
+
+//~ Functions
 
 internal b32 
 MatchString(str8 Buffer, str8 Match, u64 Offset)
@@ -254,7 +261,7 @@ json_token *JSON_ParseElement(str8 Buffer, u64 *Pos)
 
 json_token *JSON_LookupIdentifierValue(json_token *Token, str8 Identifier)
 {
-    json_token *Found = 0;
+    json_token *Found = &JSON_NilToken;
     
     for(json_token *Search = Token->Child;
         Search;
@@ -277,7 +284,7 @@ json_token *JSON_LookupIdentifierValue(json_token *Token, str8 Identifier)
         }
     }
     
-    if(Found)
+    if(Found != &JSON_NilToken)
     {
         Assert(Found->Next->Type == JSON_TokenType_Colon);
         Found = Found->Next->Next;

@@ -15,70 +15,148 @@
 
 #include "lr/lr.h"
 //- Project 
-#include "listing_0065_haversine_formula.cpp"
 #include "json_parser.h"
-#include "json.cpp"
 #include "os.c"
+#include "listing_0065_haversine_formula.cpp"
+#include "profiler.cpp"
+#include "json.cpp"
 
 //- Main 
-
 int main(int ArgsCount, char *Args[])
 {
-    u64 MaxPairCount = 100000000;
+    u64 PairCount = 0;
     
-    str8 In = ReadEntireFileIntoMemory(Args[1]);
-    u64 Pos = 0;
-    json_token *JSON = JSON_ParseElement(In, &Pos);
-    json_token *PairsArray = JSON_LookupIdentifierValue(JSON, S8Lit("\"pairs\""));
+    u64 OSFreq = GetOSTimerFreq();
+    u64 OSStart = ReadOSTimer();
+    u64 CPUStart = ReadCPUTimer();
     
-    u64 PairsCount = 0;
+    u64 Prof_Begin = 0;
+    u64 Prof_End = 0;
     
-    // 30 bytes(characters) is the minimum for one pair
-    u64 MaxPairsCount = In.Size/30;
-    haversine_pair *HaversinePairs = (haversine_pair *)malloc(sizeof(haversine_pair)*MaxPairsCount);
+    char *JSONFileName = 0;
+    char *AnswersFileName = 0;
     
-    // Parse haversine pairs
-    {            
-        for(json_token *Pair = PairsArray->Child;
-            Pair;
-            Pair = Pair->Next)
+    Prof_Begin = ReadCPUTimer();
+    
+    // Parse command line
+    {    
+        if(ArgsCount >= 2)
         {
-            haversine_pair *HaversinePair = HaversinePairs + PairsCount;
-            
-            HaversinePair->X0 = JSON_StringToFloat(JSON_LookupIdentifierValue(Pair, S8Lit("\"x0\""))->Value);
-            HaversinePair->Y0 = JSON_StringToFloat(JSON_LookupIdentifierValue(Pair, S8Lit("\"y0\""))->Value);
-            HaversinePair->X1 = JSON_StringToFloat(JSON_LookupIdentifierValue(Pair, S8Lit("\"x1\""))->Value);
-            HaversinePair->Y1 = JSON_StringToFloat(JSON_LookupIdentifierValue(Pair, S8Lit("\"y1\""))->Value);
-            
-            PairsCount += 1;
-            
-            if(Pair->Next)
-            {
-                Assert(Pair->Next->Type == JSON_TokenType_Comma);
-                Pair = Pair->Next;
-            }
+            JSONFileName = Args[1];
+        }
+        
+        if(ArgsCount >= 3)
+        {
+            AnswersFileName = Args[2];
         }
     }
     
-    // Compute the sum
+    if(JSONFileName)
     {
-        f64 AverageSum = 0;
-        f64 AverageCoefficient = (1.0/(f64)PairsCount);
-        
-        for(u64 PairIndex = 0;
-            PairIndex < PairsCount;
-            PairIndex += 1)
+        str8 In = {};
+        TimeScope("Read")
         {
-            haversine_pair *HaversinePair = HaversinePairs + PairIndex;
-            
-            f64 EarthRadius = 6372.8;
-            f64 Sum = ReferenceHaversine(HaversinePair->X0, HaversinePair->Y0, 
-                                         HaversinePair->X1, HaversinePair->Y1,
-                                         EarthRadius);
-            AverageSum += AverageCoefficient*Sum;
+            In = ReadEntireFileIntoMemory(JSONFileName);
         }
         
-        LogFormat("Average %.16f\n", AverageSum);
+        if(In.Size)
+        {    
+            u64 Pos = 0;
+            json_token *JSON = 0;
+            
+            TimeScope("Parse")
+            {                
+                JSON = JSON_ParseElement(In, &Pos);
+            }
+            
+            json_token *PairsArray = 0;
+            haversine_pair *HaversinePairs = 0;
+            
+            // Parse haversine pairs
+            TimeScope("MiscSetup")
+            {
+                PairsArray = JSON_LookupIdentifierValue(JSON, S8Lit("\"pairs\""));
+                
+                // 30 bytes(characters) is the minimum for one pair
+                u64 MaxPairCount = In.Size/30;
+                HaversinePairs = (haversine_pair *)malloc(sizeof(haversine_pair)*MaxPairCount);
+                
+                for(json_token *Pair = PairsArray->Child;
+                    Pair;
+                    Pair = Pair->Next)
+                {
+                    haversine_pair *HaversinePair = HaversinePairs + PairCount;
+                    
+                    HaversinePair->X0 = JSON_StringToFloat(JSON_LookupIdentifierValue(Pair, S8Lit("\"x0\""))->Value);
+                    HaversinePair->Y0 = JSON_StringToFloat(JSON_LookupIdentifierValue(Pair, S8Lit("\"y0\""))->Value);
+                    HaversinePair->X1 = JSON_StringToFloat(JSON_LookupIdentifierValue(Pair, S8Lit("\"x1\""))->Value);
+                    HaversinePair->Y1 = JSON_StringToFloat(JSON_LookupIdentifierValue(Pair, S8Lit("\"y1\""))->Value);
+                    
+                    PairCount += 1;
+                    
+                    if(Pair->Next)
+                    {
+                        Assert(Pair->Next->Type == JSON_TokenType_Comma);
+                        Pair = Pair->Next;
+                    }
+                }
+            }
+            
+            // Compute the sum
+            TimeScope("Sum")
+            {
+                f64 AverageSum = 0;
+                f64 AverageCoefficient = (1.0/(f64)PairCount);
+                
+                for(u64 PairIndex = 0;
+                    PairIndex < PairCount;
+                    PairIndex += 1)
+                {
+                    haversine_pair *HaversinePair = HaversinePairs + PairIndex;
+                    
+                    f64 EarthRadius = 6372.8;
+                    f64 Sum = ReferenceHaversine(HaversinePair->X0, HaversinePair->Y0, 
+                                                 HaversinePair->X1, HaversinePair->Y1,
+                                                 EarthRadius);
+                    AverageSum += AverageCoefficient*Sum;
+                }
+                
+                TimeScope("MiscOutput")
+                {                    
+                    // TODO(luca): print average and difference between answer file 
+                    
+                    LogFormat("Average: %.16f\n", AverageSum);
+                }
+                
+            }
+            
+            Prof_End = ReadCPUTimer();
+            
+            u64 TotalCPUElapsed = Prof_End - Prof_Begin;
+            u64 TotalOSElapsed = ReadOSTimer() - OSStart;
+            u64 CPUFreq = GuessCPUFreq(TotalOSElapsed, TotalCPUElapsed, OSFreq);
+            
+            LogFormat("\n"
+                      "Elapsed: %llu\n"
+                      "Total time: %.4fms (CPU freq %llu)\n", 
+                      TotalCPUElapsed, (f64)TotalOSElapsed/(f64)OSFreq, CPUFreq);
+            
+            for(EachIndex(MarkerIndex, Prof_MarkerCount))
+            {
+                prof_marker *Marker = Prof_Markers + MarkerIndex; 
+                PrintTimeElapsed(Marker->Label, TotalCPUElapsed, Marker->Begin, Marker->End);
+            }
+            
+        }
+        else
+        {
+            LogFormat("ERROR: Cannot find file '%s' or its size is zero.\n", JSONFileName);
+        }
+    }
+    else
+    {
+        LogFormat("ERROR: No file provided.\n");
+        LogFormat("Usage: %s <data.json> [data.f64]\n", Args[0]); 
     }
     
     return 0;
