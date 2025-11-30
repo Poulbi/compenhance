@@ -50,19 +50,21 @@ struct prof_marker
 typedef struct prof_marker prof_marker;
 
 global_variable u64 Prof_MarkerCount = 0;
-global_variable prof_marker Prof_Markers[1024];
+global_variable prof_marker *Prof_Markers = 0;
+
+#define MarkerVar MacroVar(Marker)
 
 #define TimeScope(LabelName) \
-prof_marker *MacroVar(Marker) = Prof_Markers + Prof_MarkerCount; \
+prof_marker *MarkerVar = Prof_Markers + Prof_MarkerCount; \
 Prof_MarkerCount += 1; \
-MacroVar(Marker)->Label = (LabelName); \
-DeferLoop(MacroVar(Marker)->Begin = ReadCPUTimer(), MacroVar(Marker)->End = ReadCPUTimer()) 
+MarkerVar->Label = (LabelName); \
+DeferLoop(MarkerVar->Begin = ReadCPUTimer(), MarkerVar->End = ReadCPUTimer()) 
 
 #define TimeFunction \
-prof_marker *MacroVar(Marker) = Prof_Markers + Prof_MarkerCount; \
+prof_marker *MarkerVar = Prof_Markers + Prof_MarkerCount; \
 Prof_MarkerCount += 1; \
-MacroVar(Marker)->Label = (__FUNCTION__); \
-MacroVar(Marker)->Begin = ReadCPUTimer(); \
-Defer { MacroVar(Marker)->End = ReadCPUTimer(); };
+MarkerVar->Label = (char *)(__FUNCTION__); \
+MarkerVar->Begin = ReadCPUTimer(); \
+Defer { MarkerVar->End = ReadCPUTimer(); };
 
 #define EachIndex(Index, Count) u64 Index = 0; Index < Count; Index += 1

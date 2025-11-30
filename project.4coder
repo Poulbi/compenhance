@@ -18,9 +18,9 @@ blacklist_patterns =
 
 paths =
 {
-    { .path = ".",                 .recursive = false, .relative = true, },
-    { .path = "src/json_parser",   .recursive = true , .relative = true, },
-    { .path = "src/lib",           .recursive = true , .relative = true, },
+    { .path = ".",                       .recursive = false, .relative = true, },
+    { .path = "src/haversine_processor", .recursive = true , .relative = true, },
+    { .path = "src/lib",                 .recursive = true , .relative = true, },
 };
 
 load_paths = 
@@ -32,7 +32,7 @@ load_paths =
 
 commands = 
 {
-    .build_haversine_processor =
+    .build_haversine_processor_debug =
     {
         .out = "*compilation*", .save_dirty_files = true,
         .win = ".\src\haversine_processor\build.bat",
@@ -44,15 +44,16 @@ commands =
         .win = ".\src\haversine_generator\build.bat",
         .linux = "./src/haversine_generator/build.sh",
     },
-    .build_json_parser =
+    .haversine_processor_release =
     {
         .out = "*compilation*", .save_dirty_files = true,
-        .win = ".\src\json_parser\build.bat",
-        .linux = "./src/json_parser/build.sh",
+        .win = ".\src\haversine_processor\build.bat",
+        .linux = "./src/haversine_processor/build.sh release",
     },
+    
 };
 
 fkey_command =
 {
-    .F1 = "build_json_parser",
+    .F1 = "haversine_processor_debug",
 };

@@ -10,8 +10,26 @@ global_variable u8 LogBuffer[Kilobytes(64)];
 #include <sys/mman.h>
 #include <sys/stat.h>
 #define STB_SPRINTF_IMPLEMENTATION
-#include "../lib/stb_sprintf.h"
+#include "stb_sprintf.h"
 #endif
+
+#if OS_WINDOWS
+# include <windows.h>
+# define RADDBG_MARKUP_IMPLEMENTATION
+#else
+# define RADDBG_MARKUP_STUBS
+#endif
+#include "raddbg_markup.h"
+#include "raddbg_markup.h"
+
+struct str8
+{
+    u8 *Data;
+    u64 Size;
+};
+typedef struct str8 str8;
+raddbg_type_view(str8, no_addr(array((char *)Data, Size)));
+#define S8Lit(String) (str8){.Data = (u8 *)(String), .Size = (sizeof((String)) - 1)}
 
 //- Debug utilities 
 void AssertErrnoNotEquals(smm Result, smm ErrorValue)

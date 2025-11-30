@@ -794,9 +794,9 @@ x Collapsed both uniform and cluster codepaths by creating one cluster when unif
 x No clusters array, just regenerate the 4 values for each cluster
 
 Processor
-- simple loop that mimics generator and returns the sum
-- haversine_pair type
-- minimum amount of json per pair -> you can get the max number of pairs from json file size
+x simple loop that mimics generator and returns the sum
+x haversine_pair type
+x minimum amount of json per pair -> you can get the max number of pairs from json file size
 
 Cleanup times can be adressed.
 Clearing data that holds pointers can catch use-after-free.

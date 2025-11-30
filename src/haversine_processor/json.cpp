@@ -43,7 +43,6 @@ internal b32
 MatchString(str8 Buffer, str8 Match, u64 Offset)
 {
     b32 Result = true;
-    
     Assert(Offset < Buffer.Size);
     Buffer.Data += Offset;
     Buffer.Size -= Offset;
@@ -291,4 +290,86 @@ json_token *JSON_LookupIdentifierValue(json_token *Token, str8 Identifier)
     }
     
     return Found;
+}
+
+
+#if 0
+struct json_token_stack_node
+{
+    json_token *Token;
+    json_token_stack_node *Prev;
+};
+
+struct json_token_stack
+{
+    json_token_stack_node *Last;
+};
+
+json_token *Pop(json_token_stack *Stack)
+{
+    json_token *Result = Stack->Last->Token;
+    
+    json_token_stack_node *FreeNode = Stack->Last;
+    Stack->Last = Stack->Last->Prev;
+    free(FreeNode);
+    
+    return Result;
+}
+
+void Push(json_token_stack *Stack, json_token *Token)
+{
+    json_token_stack_node *New = (json_token_stack_node *)malloc(sizeof(*New));
+    *New = {};
+    New->Token = Token;
+    if(Stack->Last)
+    {
+        New->Prev = Stack->Last;
+    }
+    Stack->Last = New;
+}
+
+b32 IsEmpty(json_token_stack Stack)
+{
+    b32 Result = (Stack.Last == 0);
+    return Result;
+}
+
+void JSON_FreeTokensNoRecursion(json_token *Token)
+{
+    json_token_stack Stack = {};
+    
+    Push(&Stack, Token);
+    
+    do
+    {
+        Token = Pop(&Stack);
+        while(Token)
+        {
+            if(Token->Child)
+            {
+                Push(&Stack, Token->Child);
+            }
+            
+            json_token *FreeElement = Token;
+            Token = Token->Next;
+            free(FreeElement);
+        }
+        
+    }
+    while(!IsEmpty(Stack));
+}
+#endif
+
+void JSON_FreeTokens(json_token *Token)
+{
+    while(Token)
+    {
+        json_token *FreeElement = Token;
+        
+        JSON_FreeTokens(Token->Child);
+        Token = Token->Next; 
+        
+        free(FreeElement);
+    }
+    
 }
