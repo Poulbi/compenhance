@@ -888,9 +888,16 @@ Reordering does happens mostly with small sets of instructions/effects.
 
 Global namespace is easier to use.  Because you need to be able to deploy markers very easily.
 It is going to be compiled out anyway.
-17:37
+
+__COUNTER__ is not related to slots.  You can still use another method to do slots.
+int __Prof_ID == __COUNTER__;
 
 # 59. [Profiling Nested Blocks](https://www.computerenhance.com/p/profiling-nested-blocks)
+A good profiler needs to be easy to deploy, accurate and have low overhead.
+
+- A marker has a hitcount
+- Profiler global with start and end (and marker array)
+
 # 60. [Monday Q&A #19 (2023-07-10)](https://www.computerenhance.com/p/monday-q-and-a-19-2023-07-10)
 # 61. [Profiling Recursive Blocks](https://www.computerenhance.com/p/profiling-recursive-blocks)
 # 62. [Monday Q&A #20 (2023-07-17)](https://www.computerenhance.com/p/monday-q-and-a-20-2023-07-17)
