@@ -873,7 +873,23 @@ There are two comon ways to automate profiling
 1. Block based with begin and end (also found in commercial profilers)
 2. Marker based, where deltas are computed implicitly by the order they go in.
 
+- BeginProfile()
+- EndAndPrintProfile()
+- static_assert(__COUNTER__ < ArrayCount(profiler::Anchors))
+
 # 58. [Monday Q&A #18 (2023-07-03)](https://www.computerenhance.com/p/monday-q-and-a-18-2023-07-03)
+Some games have locality (e.g., 1000 players are rarely in the same location)
+Relative terms: "Who is doing better?"
+
+Doing manual work + debug utility is fine. -> almost as good.
+"When it gets really complicated that is often a sign that it is not supported.  The only code worth coding is simple code.  Just move one."
+
+Reordering does happens mostly with small sets of instructions/effects.
+
+Global namespace is easier to use.  Because you need to be able to deploy markers very easily.
+It is going to be compiled out anyway.
+17:37
+
 # 59. [Profiling Nested Blocks](https://www.computerenhance.com/p/profiling-nested-blocks)
 # 60. [Monday Q&A #19 (2023-07-10)](https://www.computerenhance.com/p/monday-q-and-a-19-2023-07-10)
 # 61. [Profiling Recursive Blocks](https://www.computerenhance.com/p/profiling-recursive-blocks)
