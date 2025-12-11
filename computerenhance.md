@@ -898,6 +898,8 @@ A good profiler needs to be easy to deploy, accurate and have low overhead.
 - A marker has a hitcount
 - Profiler global with start and end (and marker array)
 
+You can track in which block you are so you can subtract that time from the outer block.
+
 # 60. [Monday Q&A #19 (2023-07-10)](https://www.computerenhance.com/p/monday-q-and-a-19-2023-07-10)
 # 61. [Profiling Recursive Blocks](https://www.computerenhance.com/p/profiling-recursive-blocks)
 # 62. [Monday Q&A #20 (2023-07-17)](https://www.computerenhance.com/p/monday-q-and-a-20-2023-07-17)
